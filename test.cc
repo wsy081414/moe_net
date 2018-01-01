@@ -11,6 +11,7 @@ using namespace moe;
 void func()
 {
     printf("thread run :  %d \n",everythread::tid());
+    sleep(1);
 }
 
 int main()
@@ -25,5 +26,6 @@ int main()
     {
         tp.add_task(func);
     }
+    sleep(100);
 }
 
