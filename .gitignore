@@ -1,3 +1,4 @@
 .vscode/settings.json
 *.out
 base/bulid/*
+build/*

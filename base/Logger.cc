@@ -1,6 +1,6 @@
-#include <Logger.h>
-#include <Everythread.h>
-#include <String.h>
+#include <moe_net/base/Logger.h>
+#include <moe_net/base/Everythread.h>
+#include <moe_net/base/String.h>
 namespace moe 
 {
 namespace aux 
@@ -18,6 +18,7 @@ const String level_name[6]={
 using namespace moe;
 
 
+Logger::LogLevel Logger::s_level=Logger::TRACE;
 
 Logger::Logger(const char *file_name,int line,const char *func_name,LogLevel level,bool to_abort)
     :m_time(),m_log(),mp_file(file_name),mp_func(func_name),m_line(line),m_level(level),mb_abort(to_abort)
@@ -25,7 +26,7 @@ Logger::Logger(const char *file_name,int line,const char *func_name,LogLevel lev
     prepend_time();
     pid_t tid = everythread::tid();
     m_log<<" "<<aux::level_name[level].c_str()<<" ";
-    m_log<<"in thread : "<<tid<<" "<<everythread::t_name<<" ";
+    m_log<<" : "<<tid<<" "<<everythread::t_name<<" | ";
     
     //这里添加出错信息 
 

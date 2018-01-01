@@ -11,7 +11,7 @@ namespace everythread
 {
 
 extern __thread int t_tid;
-extern __thread const char t_name[32];
+extern __thread char t_name[32];
 extern __thread int t_name_len;
 
 inline pid_t tid()

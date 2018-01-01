@@ -1,8 +1,8 @@
 #ifndef MOE_LOGGER_H
 #define MOE_LOGGER_H
 
-#include <LogStream.h>
-#include <Timestamp.h>
+#include <moe_net/base/LogStream.h>
+#include <moe_net/base/Timestamp.h>
 
 namespace moe
 {
@@ -26,9 +26,10 @@ class Logger
     const char *mp_file;
     const char *mp_func;
     int m_line;
+    static LogLevel s_level;
     LogLevel m_level;
+    
     bool mb_abort;
-
   public:
 
 
@@ -37,8 +38,18 @@ class Logger
     void prepend_time();
     void append();
     LogStream &log() {return m_log;}
+    static LogLevel level() {return s_level;}
+    static void level(LogLevel v) {s_level=v;}
+    
 };
-#define TRACELOG Logger(__FILE__, __LINE__, __func__, Logger::TRACE).log()
+#define TRACELOG if( Logger::level() <= Logger::TRACE) \
+                  Logger(__FILE__, __LINE__, __func__, Logger::TRACE).log()
+#define DEBUGLOG if( Logger::level() <= Logger::TRACE) \
+                  Logger(__FILE__, __LINE__, __func__, Logger::DEBUG).log()
+#define INFOLOG if( Logger::level() <= Logger::TRACE) \
+                  Logger(__FILE__, __LINE__, __func__, Logger::INFO).log()                  
+#define ERRORLOG  Logger(__FILE__, __LINE__, __func__, Logger::ERROR).log()
+#define FATAlLOG  Logger(__FILE__, __LINE__, __func__, Logger::FATAl).log()                          
 }
 
 #endif //MOE_LOGGER_H

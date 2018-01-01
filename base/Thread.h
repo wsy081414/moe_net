@@ -2,10 +2,10 @@
 #define MOE_THREAD_H
 
 #include <pthread.h>
-#include <Noncopyable.h>
+#include <moe_net/base/Noncopyable.h>
 #include <functional>
 #include <String.h>
-#include <CountDown.h>
+#include <moe_net/base/CountDown.h>
 
 namespace moe 
 {

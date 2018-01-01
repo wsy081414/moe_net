@@ -1,10 +1,11 @@
 #ifndef MOE_CONDITION_H
 #define MOE_CONDITION_H
 
-#include <Debug.h>
-#include <Mutex.h>
+
+#include <moe_net/base/Mutex.h>
+#include <moe_net/base/Noncopyable.h>
+
 #include <pthread.h>
-#include <Noncopyable.h>
 
 namespace moe 
 {

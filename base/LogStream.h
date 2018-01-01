@@ -1,8 +1,8 @@
 #ifndef MOE_LOGSTREAM_H
 #define MOE_LOGSTREAM_H
 
-#include <Timestamp.h>
-#include <Noncopyable.h>
+#include <moe_net/base/Timestamp.h>
+#include <moe_net/base/Noncopyable.h>
 #include <string.h>
 #include <stdio.h>
 namespace moe

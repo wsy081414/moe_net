@@ -1,6 +1,6 @@
 #ifndef MOE_ATOMIC_H
 #define MOE_ATOMIC_H
-#include <Noncopyable.h>
+#include <moe_net/base/Noncopyable.h>
 
 namespace moe 
 {

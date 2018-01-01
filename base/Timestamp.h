@@ -1,7 +1,7 @@
 #ifndef MOE_TIMESTAMP_H
 #define MOE_TIMESTAMP_H
 
-#include <String.h>
+#include <moe_net/base/String.h>
 
 namespace moe 
 {
