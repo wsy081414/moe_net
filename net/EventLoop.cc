@@ -1,5 +1,8 @@
 #include <moe_net/net/EventLoop.h>
 #include <moe_net/net/Channel.h>
+#include <moe_net/net/EpollPoller.h>
+#include <moe_net/net/SockOps.h>
+
 
 #include <sys/eventfd.h>
 
@@ -7,12 +10,14 @@ namespace moe
 {
 namespace everythread
 {
+
+using namespace moe::net;
 __thread EventLoop *t_loop = 0;
 }
 namespace aux
 {
 
-const int s_poll_time = 10000;
+// const int s_poll_time = 10000;
 // eventfd
 // eventfd()创建了一个"eventfd object"，能在用户态用做事件wait/notify机制，
 // 通过内核取唤醒用户态的事件。这个对象保存了一个内核维护的uint64_t类型的整型counter。
@@ -40,12 +45,14 @@ int event_fd()
 
 using namespace moe;
 using namespace moe::net;
+using namespace moe::everythread;
+
 
 EventLoop::EventLoop()
     : mb_looping(false), mb_quited(false), mb_handling(false), m_tid(everythread::tid()),
-      mp_poll(new EpollPoller(this)),
+      mp_poll(new EpollPoller(this)),m_timer_queue(this),
       m_wakeup_fd(aux::event_fd()), mp_wakeup_channel(new Channel(this, m_wakeup_fd)),
-      m_mutex()
+      m_mutex(),s_poll_time(1000*1000)
 {
     TRACELOG << "EventLoop created " << this << " " << m_tid;
     if (t_loop != nullptr)
@@ -78,10 +85,11 @@ void EventLoop::loop()
     mb_looping = true;
     mb_quited = false;
 
-    TRACELOG << " eventloop start " << m_tid;
+    TRACELOG << "eventloop start " << m_tid;
 
     while (!mb_quited)
     {
+        // TRACELOG<<" EventLoop looping -1";
         mc_active_channels.clear();
         m_poll_return = mp_poll->poll(s_poll_time, &mc_active_channels);
 
@@ -119,14 +127,14 @@ void EventLoop::add_in_queue(const Func &cb)
 
 void EventLoop::update(Channel *channel)
 {
-    assert(Channel->loop() == this);
+    assert(channel->loop() == this);
     assert(is_in_loop_thread());
     mp_poll->update(channel);
 }
 
 void EventLoop::remove(Channel *channel)
 {
-    assert(Channel->loop() == this);
+    assert(channel->loop() == this);
     assert(is_in_loop_thread());
 
     // 这里有判断
@@ -134,7 +142,7 @@ void EventLoop::remove(Channel *channel)
     mp_poll->remove(channel);
 }
 
-void EventLoop::has_channel(Channel *channel)
+bool EventLoop::has_channel(Channel *channel)
 {
     assert(channel->loop() == this);
     assert(is_in_loop_thread());
@@ -145,7 +153,7 @@ void EventLoop::has_channel(Channel *channel)
 void EventLoop::wakeup()
 {
     uint64_t one = 1;
-    ssize_t n = sock::write(m_wakeup_fd, &one, sizeof(one));
+    ssize_t n = sockops::write(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one))
     {
         // log
@@ -155,9 +163,20 @@ void EventLoop::wakeup()
 void EventLoop::wakeup_channel_handle_read()
 {
     uint64_t one = 1;
-    ssize_t n = sock::read(m_wakeup_fd, &one, sizeof(one));
+    ssize_t n = sockops::read(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one))
     {
         // log
     }
+}
+
+bool EventLoop::is_in_loop_thread()
+{
+    return m_tid == everythread::tid();
+}
+
+
+void EventLoop::add_timer(const Timer& timer)
+{
+    m_timer_queue.add_timer(timer);
 }

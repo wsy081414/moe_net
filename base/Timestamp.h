@@ -26,6 +26,18 @@ public:
     {
         m_micro = secs*kk;
     }
+    void set(int64_t v)
+    {
+        m_micro=v;
+    }
+    void add(int64_t v)
+    {
+        m_micro+=v*kk;
+    }
+    int64_t micro()
+    {
+        return m_micro;
+    }
 private:
     int64_t now();
 };

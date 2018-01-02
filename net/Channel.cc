@@ -1,6 +1,7 @@
 #include <moe_net/net/Channel.h>
 #include <moe_net/net/EventLoop.h>
-
+#include <moe_net/base/Logger.h>
+#include <moe_net/net/EpollPoller.h>
 #include <poll.h>
 #include <assert.h>
 
@@ -13,7 +14,7 @@ int Channel::s_write_event = POLLOUT;
 int Channel::s_none_event =0;
 
 Channel::Channel(EventLoop *loop,int fd)
-    :mp_loop(loop),m_fd(fd),m_events(0),m_revents(0),m_status(0),
+    :mp_loop(loop),m_fd(fd),m_events(0),m_revents(0),m_status(EpollPoller::s_new),
     mb_is_handling(false),mb_is_in_loop(false)
 {}
 
@@ -26,7 +27,7 @@ Channel::~Channel()
     if(mp_loop->is_in_loop_thread())
     {
         // 没有在 loop 中
-        assert(!loop->has_channel(this));
+        assert(!mp_loop->has_channel(this));
     }
 }
 
@@ -40,10 +41,10 @@ void Channel::remove()
 {
     assert(is_no_event());
     mb_is_in_loop = false;
-    loop->remove(this);
+    mp_loop->remove(this);
 }
 
-void handle_event(Timestamp receive_time)
+void Channel::handle_event(Timestamp receive_time)
 {
     mb_is_handling = true;
 
@@ -93,11 +94,11 @@ void handle_event(Timestamp receive_time)
 
 String Channel::events_to_string()
 {
-    return to_sting(events);
+    return to_string(m_events);
 }
 String Channel::revents_to_string()
 {
-    return to_string(revents);
+    return to_string(m_revents);
 }
 
 String Channel::to_string(int ev)

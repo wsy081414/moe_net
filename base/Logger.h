@@ -47,9 +47,11 @@ class Logger
 #define DEBUGLOG if( Logger::level() <= Logger::TRACE) \
                   Logger(__FILE__, __LINE__, __func__, Logger::DEBUG).log()
 #define INFOLOG if( Logger::level() <= Logger::TRACE) \
-                  Logger(__FILE__, __LINE__, __func__, Logger::INFO).log()                  
-#define ERRORLOG  Logger(__FILE__, __LINE__, __func__, Logger::ERROR).log()
-#define FATAlLOG  Logger(__FILE__, __LINE__, __func__, Logger::FATAl).log()                          
+                  Logger(__FILE__, __LINE__, __func__, Logger::INFO).log() 
+#define WARNLOG  Logger(__FILE__, __LINE__, __func__, Logger::WARN,true).log()
+                                   
+#define ERRORLOG  Logger(__FILE__, __LINE__, __func__, Logger::ERROR,true).log()
+#define FATAlLOG  Logger(__FILE__, __LINE__, __func__, Logger::FATAl,true).log()                          
 }
 
 #endif //MOE_LOGGER_H

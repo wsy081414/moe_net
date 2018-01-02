@@ -25,8 +25,8 @@ Logger::Logger(const char *file_name,int line,const char *func_name,LogLevel lev
 {
     prepend_time();
     pid_t tid = everythread::tid();
-    m_log<<" "<<aux::level_name[level].c_str()<<" ";
-    m_log<<" : "<<tid<<" "<<everythread::t_name<<" | ";
+    m_log<<aux::level_name[level].c_str();
+    m_log<<": "<<tid<<" "<<everythread::t_name<<" | ";
     
     //这里添加出错信息 
 
@@ -34,16 +34,21 @@ Logger::Logger(const char *file_name,int line,const char *func_name,LogLevel lev
 
 void Logger::prepend_time()
 {
-    m_log<<m_time.format_string().c_str()<<" ";
+    m_log<<m_time.format_string().c_str()<<" | ";
 }
 void Logger::append()
 {
-    m_log<<" | "<<mp_file<<"-"<<m_line<<"-"<<mp_func<<'\n';
-    m_log.print();
+    m_log<<" | "<<mp_file<<"-"<<m_line<<"-"<<mp_func;
 }
 
 
 Logger::~Logger()
 {
-    append();
+    if(mb_abort)
+    {
+        append();
+    }
+    m_log<<'\n';
+    m_log.print();
+    
 }

@@ -41,7 +41,7 @@ private:
     bool mb_is_handling;
     bool mb_is_in_loop;
     
-    String to_string();
+    String to_string(int);
     
 public:
     Channel(EventLoop *,int fd);
@@ -56,9 +56,9 @@ public:
 
     int fd() {return m_fd;}
     int events() {return m_events;}
-    void revents(int v) {m_revents=v;}
+    void revents(int v) {m_revents=v;} 
     
-    bool is_no_event() {return m_events == s_nono_event;}
+    bool is_no_event() {return m_events == s_none_event;}
     bool is_reading() {return m_events & s_read_event;}
     bool is_writing() {return m_events & s_write_event;}
 
@@ -67,17 +67,20 @@ public:
     
     void disable_read() {m_events &= ~s_read_event; update();}
     void disable_write() {m_events &= ~s_write_event; update();}
+    void disable_all() {m_events = 0; update();}
+    
 
-    void status(int v) {m_status = m;}
+    void status(int v) {m_status = v;}
     int status() {return m_status;}
 
-    EventLoop loop() {return mp_loop;}
+    EventLoop *loop() {return mp_loop;}
 
     void remove();
     void update();
     
     String events_to_string();
     String revents_to_string();
+    
  
 };
 }

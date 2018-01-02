@@ -3,6 +3,12 @@
 
 #include <moe_net/base/Noncopyable.h>
 #include <moe_net/base/Timestamp.h>
+#include <moe_net/base/Mutex.h>
+#include <moe_net/base/Logger.h>
+#include <moe_net/net/TimerQueue.h>
+#include <moe_net/net/Timer.h>
+
+
 
 #include <functional>
 #include <vector>
@@ -15,7 +21,7 @@ namespace net
 
 
 class Channel;
-
+class EpollPoller;
 
 class EventLoop : aux::Noncopyable
 {
@@ -31,22 +37,40 @@ private:
     bool mb_handling;
     const pid_t m_tid;
     std::unique_ptr<Channel> mp_wakeup_channel;
-    std::unique_ptr<Channel> mp_poll;
+    std::unique_ptr<EpollPoller> mp_poll;
 
     Timestamp m_poll_return;
 
     Mutex m_mutex;
+
+    int m_wakeup_fd;
+    Channel *m_wakeup_channel;
+    const int s_poll_time;
+
+    TimerQueue m_timer_queue;
+
+    void wakeup_channel_handle_read();
+    void add_in_queue(const Func&);
+    void update(Channel *);
+    void remove(Channel *);
 public:
     EventLoop();
     ~EventLoop();
 
     void loop();
     void quit();
+    void wakeup();
 
     Timestamp poll_return();
 
     bool is_in_loop_thread();
+    bool has_channel(Channel *);
 
+    
+    friend class Channel;
+    friend class EpollPoller;
+    
+    void add_timer(const Timer& );
 };
 }
 }

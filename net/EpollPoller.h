@@ -2,28 +2,32 @@
 #define MOE_EPOLLPOLLER_H
 
 
-#include <moe_net/base/Noncopyalbe.h>
+#include <moe_net/base/Noncopyable.h>
 #include <moe_net/base/Timestamp.h>
+#include <moe_net/base/Mutex.h>
+
 
 #include <map>
+#include <vector>
+#include <sys/epoll.h>
 
 namespace moe
 {
 namespace net
 {
-namespace parts
-{
 
 using namespace moe;
+using namespace moe::net;
 
+class Channel;
 class EventLoop;
 
-class EpollPoller : moe::aux::Noncopyalbe
+class EpollPoller : moe::aux::Noncopyable
 {
 public:
     typedef std::vector<Channel *> ChannelVector;
     EpollPoller(EventLoop *);
-    ~EventLoop();
+    ~EpollPoller();
 
     Timestamp poll(int,ChannelVector *);
     void update(Channel *);
@@ -31,28 +35,30 @@ public:
 
     bool has_channel(Channel *);
     bool is_in_loop_thread();
-private:
-    void fill_active_channel(int,ChannelVector *);
 
+        static const int s_new = -1;
+    static const int s_del = 0;
+    static const int s_old =1;
+private:
+    void fill_active_vector(int,ChannelVector *);
+    void update_epoll(int,Channel*);
     typedef std::vector<struct epoll_event> EventVector;
 
     int m_epoll_fd;
-    EventVector m_events;
+    EventVector mc_events;
 
     typedef std::map<int, Channel*> ChannelMap;
     ChannelMap mc_channels;
 
     EventLoop *mp_loop;
 
-    static const int s_new = -1;
-    static const int s_del = 0;
-    static const int s_old =1;
+
 
 };
 
 
 
-}
+
 }
 }
 
