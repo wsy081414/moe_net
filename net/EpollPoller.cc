@@ -17,7 +17,7 @@ using namespace moe::net;
 // https://stackoverflow.com/questions/10011252/whats-the-advantage-of-using-epoll-create1-instead-of-epoll-create
 // epoll_create 是一个老的，旧的
 EpollPoller::EpollPoller(EventLoop *loop)
-    : mp_loop(loop), m_epoll_fd(::epoll_create1(EPOLL_CLOEXEC))
+    : mp_loop(loop), m_epoll_fd(::epoll_create1(EPOLL_CLOEXEC)),mc_events(16)
 {
     if (m_epoll_fd)
     {
@@ -32,10 +32,12 @@ EpollPoller::~EpollPoller()
 Timestamp EpollPoller::poll(int time_out, ChannelVector *wall_fill)
 {
     // log
-
+    
+    // TRACELOG<<"fd:"<<m_epoll_fd<<" size:"<<mc_events.size()<<" timeout:"<<time_out;
     int active_counts = ::epoll_wait(m_epoll_fd, &*mc_events.begin(),
                                      static_cast<int>(mc_events.size()),
                                      time_out);
+    TRACELOG<<"epoll poll return ,counts:"<<active_counts<<" errno: "<<strerror(errno);
     int err_tmp = errno;
     Timestamp poll_return;
     if (active_counts > 0)
@@ -89,6 +91,7 @@ void EpollPoller::update(Channel *channel)
             assert(mc_channels.find(fd) == mc_channels.end());
             mc_channels[fd] = channel;
             update_epoll(EPOLL_CTL_ADD, channel);
+            TRACELOG<<"epoll add channel :"<<mc_channels.size();
         }
         else if (status == s_old)
         {
@@ -156,7 +159,7 @@ void EpollPoller::update_epoll(int cmd, Channel *channel)
 
     if (::epoll_ctl(m_epoll_fd, cmd, fd, &event) < 0)
     {
-        // log
+        FATAlLOG<<"epoll_ctl error";
     }
 }
 

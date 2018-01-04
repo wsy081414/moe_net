@@ -52,7 +52,7 @@ EventLoop::EventLoop()
     : mb_looping(false), mb_quited(false), mb_handling(false), m_tid(everythread::tid()),
       mp_poll(new EpollPoller(this)),m_timer_queue(this),
       m_wakeup_fd(aux::event_fd()), mp_wakeup_channel(new Channel(this, m_wakeup_fd)),
-      m_mutex(),s_poll_time(1000*1000)
+      m_mutex(),s_poll_time(1000*8)
 {
     TRACELOG << "EventLoop created " << this << " " << m_tid;
     if (t_loop != nullptr)
@@ -89,7 +89,6 @@ void EventLoop::loop()
 
     while (!mb_quited)
     {
-        // TRACELOG<<" EventLoop looping -1";
         mc_active_channels.clear();
         m_poll_return = mp_poll->poll(s_poll_time, &mc_active_channels);
 
@@ -172,11 +171,16 @@ void EventLoop::wakeup_channel_handle_read()
 
 bool EventLoop::is_in_loop_thread()
 {
+    if(m_tid != everythread::tid())
+    {
+        FATAlLOG<<"create thread: "<<m_tid <<" running thread: "<<everythread::tid();
+    }
     return m_tid == everythread::tid();
 }
 
 
-void EventLoop::add_timer(const Timer& timer)
+int64_t EventLoop::add_timer(const TimerCallBack& cb,int64_t when,bool repeat)
 {
-    m_timer_queue.add_timer(timer);
+ 
+    return m_timer_queue.add_timer(cb,when,repeat);
 }

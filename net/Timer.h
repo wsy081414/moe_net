@@ -34,7 +34,7 @@ public:
         m_cb();
     }
     void restart();
-    Timestamp expiration()
+    Timestamp expiration() const
     {
         return m_expiration;
     }

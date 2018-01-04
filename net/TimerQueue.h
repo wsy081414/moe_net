@@ -23,6 +23,7 @@ namespace net
 class TimerQueue : aux::Noncopyable
 {
 public:
+    typedef Timer::TimerCallBack TimerCallBack;
     explicit TimerQueue(EventLoop*);
     ~TimerQueue();
 private:
@@ -46,14 +47,17 @@ private:
     std::vector<Timer*> get_expired(Timestamp now);
     void handle_expiration();
 
+    int64_t readd(Timer *);
 
 
 public:
-    void add_timer(const Timer& );
-    void add_timer(const Timer::TimerCallBack& );
+    // int64_t add_timer(const Timer& );
+    // void add_timer(const Timer::TimerCallBack& );
     
     void cancel_timer(int64_t index);
-    int64_t add_timer(Timer &timer);
+    int64_t add_timer(const TimerCallBack& cb,int64_t when,bool repeat);
+
+    // int64_t add_timer(Timer &timer);
 
 
 

@@ -18,7 +18,13 @@ using namespace moe::net;
 
 void func()
 {
-    printf("thread run :  %d \n",everythread::tid());
+    printf("---------------------------------------thread run :  %d \n",everythread::tid());
+    sleep(1);
+}
+
+void func2()
+{
+    printf("---------------------------------------run once%d \n",everythread::tid());
     sleep(1);
 }
 
@@ -32,15 +38,17 @@ int main()
     tp.start(4);
     for(int i=0;i<10;i++)
     {
-        tp.add_task(func);
+        // tp.add_task(func);
     }
 
     EventLoopThread loop;
     // TRACELOG<<loop.is_in_loop_thread();
-    // loop.start();
+    EventLoop *loop_ptr=loop.start();
     
-    TimerQueue timequeue(loop);
+    // TimerQueue timequeue(loop_ptr);
 
+    loop_ptr->add_timer(func,2);
+    loop_ptr->add_timer(func2,3);
 
 
     sleep(100);

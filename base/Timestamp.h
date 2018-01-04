@@ -34,7 +34,7 @@ public:
     {
         m_micro+=v*kk;
     }
-    int64_t micro()
+    int64_t micro() const
     {
         return m_micro;
     }
@@ -42,6 +42,10 @@ private:
     int64_t now();
 };
 
+inline bool operator<(const Timestamp &l,const Timestamp &r)
+{
+    return l.micro()<r.micro();
+}
 
 
 }

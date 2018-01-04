@@ -27,6 +27,7 @@ class EventLoop : aux::Noncopyable
 {
 public:
     typedef std::function<void ()> Func;
+    typedef Timer::TimerCallBack TimerCallBack;
 private:
     typedef std::vector<Channel *> ChannelVector;
 
@@ -70,7 +71,7 @@ public:
     friend class Channel;
     friend class EpollPoller;
     
-    void add_timer(const Timer& );
+    int64_t add_timer(const TimerCallBack& ,int64_t when,bool repeat=false );
 };
 }
 }
