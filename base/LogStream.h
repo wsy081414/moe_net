@@ -14,18 +14,18 @@ const int small_buffer_size = 4000;
 const int big_buffer_size = 4000 * 1000;
 
 template <int Size>
-class Buffer : aux::Noncopyable
+class LogBuffer : aux::Noncopyable
 {
   private:
     char m_data[Size];
     char *mp_cur;
 
   public:
-    Buffer()
+    LogBuffer()
         : mp_cur(m_data)
     {
     }
-    ~Buffer()
+    ~LogBuffer()
     {
     }
 
@@ -60,7 +60,7 @@ class Buffer : aux::Noncopyable
 class LogStream : aux::Noncopyable
 {
   private:
-    aux::Buffer<aux::small_buffer_size> m_buffer;
+    aux::LogBuffer<aux::small_buffer_size> m_buffer;
 
     template<typename T>
     void append_num(T);

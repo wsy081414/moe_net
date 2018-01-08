@@ -49,6 +49,9 @@ private:
     const int s_poll_time;
 
     TimerQueue m_timer_queue;
+    std::vector<Func> mc_tasks;
+    bool m_handle_tasks;
+    void handle_tasks();
 
     void wakeup_channel_handle_read();
     void add_in_queue(const Func&);
@@ -67,11 +70,14 @@ public:
     bool is_in_loop_thread();
     bool has_channel(Channel *);
 
+
     
     friend class Channel;
     friend class EpollPoller;
     
-    int64_t add_timer(const TimerCallBack& ,int64_t when,bool repeat=false );
+     int64_t add_timer(const TimerCallBack& ,int64_t when,bool repeat=false );
+     void cancel_timer(int64_t );
+     void add_task(const Func & );
 };
 }
 }

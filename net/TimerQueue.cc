@@ -117,6 +117,7 @@ void TimerQueue::cancel_timer(int64_t index)
         {
             delete it->second->second;
             mc_timers.erase(it->second);
+            mc_timers_for_del.erase(it);
         }
    
     }else{
@@ -148,6 +149,7 @@ void TimerQueue::handle_expiration()
 
 std::vector<Timer*> TimerQueue::get_expired(Timestamp now)
 {
+    // TRACELOG<<"size : "<<mc_timers.size()<<" "<<mc_timers_for_del.size();
     assert(mc_timers_for_del.size() == mc_timers.size());
     std::vector<Timer*> ret;
     TimerMapRun::iterator expired_last=mc_timers.lower_bound(now);
@@ -208,7 +210,7 @@ int64_t TimerQueue::readd(Timer *timer)
     if(it == mc_timers.end())
     {
         new_run = true;
-    }else{
+    }else{ 
 
         // 添加符号运算
         if(timer->expiration() < it->first)
@@ -222,7 +224,8 @@ int64_t TimerQueue::readd(Timer *timer)
     std::pair<TimerMapRun::iterator, bool> tmp = mc_timers.insert( std::pair<Timestamp,Timer*>(timer->expiration(),timer));
     mc_timers_for_del.insert(std::pair<int64_t,TimerMapRun::iterator>(timer->index(),tmp.first));
     
-    TRACELOG<<"add timer:"<<timer->index()<<" expiration :"<< timer->expiration().format_string()<<"need reset timefd: "<<new_run;
+    // TRACELOG<<"add timer:"<<timer->index()<<" expiration :"<< timer->expiration().format_string()
+    //         <<"need reset timefd: "<<new_run<<" size: "<<mc_timers.size()<<" "<<mc_timers_for_del.size();
     
     if(new_run == true)
     {

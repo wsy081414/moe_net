@@ -47,9 +47,14 @@ int main()
     
     // TimerQueue timequeue(loop_ptr);
 
-    loop_ptr->add_timer(func,2);
-    loop_ptr->add_timer(func2,3);
+    // loop_ptr->add_timer(func,2,true);
+    // int64_t id=loop_ptr->add_timer(func2,3,true);
+    // loop_ptr->add_timer(func2,3);
+    // loop_ptr->add_timer(func2,3);
 
+    // loop_ptr->cancel_timer(id);
+    
+    loop_ptr->add_task(func);
 
     sleep(100);
 }

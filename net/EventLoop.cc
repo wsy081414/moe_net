@@ -102,7 +102,9 @@ void EventLoop::loop()
 
         mb_handling = false;
 
-        // timer
+        handle_tasks();
+
+
     }
     mb_looping = false;
     TRACELOG << " eventloop quit";
@@ -117,10 +119,16 @@ void EventLoop::quit()
     }
 }
 
-void EventLoop::add_in_queue(const Func &cb)
+void EventLoop::add_in_queue(const Func &task)
 {
     {
         MutexLock lock(m_mutex);
+        mc_tasks.push_back(task);
+    }
+
+    if(!is_in_loop_thread() || m_handle_tasks)
+    {
+        wakeup();
     }
 }
 
@@ -151,6 +159,7 @@ bool EventLoop::has_channel(Channel *channel)
 
 void EventLoop::wakeup()
 {
+    TRACELOG<<"wake up eventloop";
     uint64_t one = 1;
     ssize_t n = sockops::write(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one))
@@ -183,4 +192,35 @@ int64_t EventLoop::add_timer(const TimerCallBack& cb,int64_t when,bool repeat)
 {
  
     return m_timer_queue.add_timer(cb,when,repeat);
+}
+void EventLoop::cancel_timer(int64_t id)
+{
+    m_timer_queue.cancel_timer(id);
+}
+
+void EventLoop::add_task(const Func & task)
+{
+    if(is_in_loop_thread())
+    {
+        task();
+    }else{
+        add_in_queue(task);
+    }
+}
+
+void EventLoop::handle_tasks()
+{
+    m_handle_tasks=true;
+    std::vector<Func> tmp_vector;
+    {
+        MutexLock lock(m_mutex);
+        tmp_vector.swap(mc_tasks);
+    }
+
+    for(task:tmp_vector)
+    {
+        task();
+    }
+    m_handle_tasks=false;
+    
 }

@@ -51,7 +51,7 @@ public:
 
     void set_read_cb(const ReadEventCallBack &cb) {m_read_cb = cb;}
     void set_write_cb(const EventCallBack &cb) {m_write_cb = cb;}
-    void set_cloce_cb(const EventCallBack &cb) {m_close_cb = cb;}
+    void set_close_cb(const EventCallBack &cb) {m_close_cb = cb;}
     void set_error_cb(const EventCallBack &cb) {m_error_cb =cb;}
 
     int fd() {return m_fd;}
