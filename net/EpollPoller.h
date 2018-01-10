@@ -36,7 +36,7 @@ public:
     bool has_channel(Channel *);
     bool is_in_loop_thread();
 
-        static const int s_new = -1;
+    static const int s_new = -1;
     static const int s_del = 0;
     static const int s_old =1;
 private:

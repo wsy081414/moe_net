@@ -42,7 +42,7 @@ void EventLoopThread::send_into_thread()
     EventLoop loop;
     if(init_cb)
     {
-        init_cb();
+        init_cb(&loop);
     }
 
     {

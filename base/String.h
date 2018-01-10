@@ -73,7 +73,14 @@ public:
         return size()==0;
     }
 
-
+    bool operator==(const String &rhs)
+    {
+        return ::memcpy(c_str(),rhs.c_str(),size());
+    }
+    bool operator!=(const String &rhs)
+    {
+        return !this->operator==(rhs);
+    }
 };
 }
 

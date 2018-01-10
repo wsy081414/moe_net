@@ -3,6 +3,9 @@
 #include <moe_net/net/SockAddr.h>
 
 #include <netinet/in.h>
+#include <sys/types.h>          /* See NOTES */
+#include <sys/socket.h>
+#include <netinet/tcp.h>
 
 using namespace moe;
 using namespace moe::net;
@@ -38,4 +41,29 @@ void Socket::listen()
 void Socket::shutdown()
 {
     sockops::shutdown(m_fd);
+}
+
+
+
+void Socket::set_no_delay(bool on)
+{
+    int opt=on?1:0;
+    ::setsockopt(m_fd,IPPROTO_TCP,TCP_NODELAY,&opt,static_cast<socklen_t>(sizeof(opt)));
+}
+void Socket::set_reuse_addr(bool on)
+{
+    int opt=on?1:0;
+    ::setsockopt(m_fd,SOL_SOCKET,SO_REUSEADDR,&opt,static_cast<socklen_t>(sizeof(opt)));
+}
+void Socket::set_reuse_port(bool on)
+{
+    int opt=on?1:0;
+    ::setsockopt(m_fd,SOL_SOCKET,SO_REUSEPORT,&opt,static_cast<socklen_t>(sizeof(opt)));
+    // 可能失败,
+    // log
+}
+void Socket::set_keepalive(bool on)
+{
+    int opt=on?1:0;
+    ::setsockopt(m_fd,SOL_SOCKET,SO_KEEPALIVE,&opt,static_cast<socklen_t>(sizeof(opt)));
 }

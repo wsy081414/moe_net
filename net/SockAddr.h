@@ -18,7 +18,7 @@ class SockAddr
 public:
     SockAddr(uint16_t port=0,bool lo=false  ,bool ipv6 = false);
     SockAddr(String ip,uint16_t port,bool ipv6=false);
-    explicit SockAddr(sockaddr_in& addr)
+    explicit SockAddr(const sockaddr_in& addr)
         :m_addr(addr)
     {}
 

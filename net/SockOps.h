@@ -132,6 +132,22 @@ inline int sock_error(int fd)
     }
 }
 
+inline struct sockaddr_in peer_addr(int fd)
+{
+    sockaddr_in tmp;
+    bzero(&tmp,sizeof(tmp));
+    return tmp;
+}
+
+inline struct sockaddr_in local_addr(int fd)
+{
+    sockaddr_in tmp;
+    bzero(&tmp,sizeof(tmp));
+    
+    return tmp;
+}
+
+
 }
 }
 }

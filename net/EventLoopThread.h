@@ -20,7 +20,7 @@ class EventLoop;
 class EventLoopThread : aux::Noncopyable
 {
 public:
-    typedef std::function<void ()> InitFunc;
+    typedef std::function<void (EventLoop*)> InitFunc;
 
     EventLoopThread(const InitFunc& cb=InitFunc(),const String & name="EventLoopThread");
     ~EventLoopThread();
