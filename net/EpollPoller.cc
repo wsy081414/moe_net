@@ -77,21 +77,23 @@ void EpollPoller::fill_active_vector(int active_counts, ChannelVector *will_fill
 
 void EpollPoller::update(Channel *channel)
 {
+    
     assert(is_in_loop_thread());
     const int status = channel->status();
-
     // log
     int fd = channel->fd();
 
-    if (status == s_new || status == s_old)
-    {
+    // TRACELOG<<"EpollPoller::update(Channel *channel) : "<<fd<<" "<<status;
+
+    // if (status == s_new || status == s_old)
+    // {
         // 新添加的 channel
         if (status == s_new)
         {
             assert(mc_channels.find(fd) == mc_channels.end());
             mc_channels[fd] = channel;
             update_epoll(EPOLL_CTL_ADD, channel);
-            TRACELOG<<"epoll add channel :"<<mc_channels.size();
+
         }
         else if (status == s_old)
         {
@@ -100,9 +102,9 @@ void EpollPoller::update(Channel *channel)
             update_epoll(EPOLL_CTL_MOD, channel);
         }
         channel->status(s_old);
-    }
-    else
-    {
+    // }
+    // else
+    // {
         // // 删除已有的
 
         // assert(mc_channels.find(fd) != mc_channels.end());
@@ -121,13 +123,15 @@ void EpollPoller::update(Channel *channel)
         //     // 更新
         //     update_epoll(EPOLL_CTL_MOD, channel);
         // }
-    }
+    // }
 }
 
 void EpollPoller::remove(Channel *channel)
 {
     assert(is_in_loop_thread());
     int fd = channel->fd();
+    
+    // TRACELOG<<"EpollPoller::remove(Channel *channel) : "<<fd;
 
     assert(mc_channels.find(fd) != mc_channels.end());
     assert(mc_channels[fd] == channel);

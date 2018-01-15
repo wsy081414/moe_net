@@ -1,7 +1,7 @@
 #include <moe_net/net/Connector.h>
 #include <moe_net/net/EventLoop.h>
 #include <moe_net/net/Channel.h>
-
+#include <errno.h>
 
 using namespace moe;
 using namespace moe::net;
@@ -28,9 +28,12 @@ Connector::~Connector()
 
 void Connector::start()
 {
+
     mb_connect = true;
     mp_loop->add_task(std::bind(
         &Connector::start_in_loop, this));
+    TRACELOG<<"Connector start() add over";
+        
 }
 void Connector::restart()
 {
@@ -44,13 +47,17 @@ void Connector::restart()
 }
 void Connector::stop()
 {
+    TRACELOG<<"Connector::stop()";
+    
     mb_connect = false;
-    mp_loop->add_task(std::bind(
+    mp_loop->add_task_in_queue(std::bind(
         &Connector::stop_in_loop, this));
 }
 
 void Connector::start_in_loop()
 {
+    TRACELOG<<"Connector start_in_loop()";
+    
     assert(mp_loop->is_in_loop_thread());
     assert(m_status == e_disconnected);
     // mb_connect 表示应该要连接,所以 connect
@@ -66,15 +73,17 @@ void Connector::start_in_loop()
 
 void Connector::stop_in_loop()
 {
+    TRACELOG<<"Connector::stop_in_loop()";
+    
     assert(mp_loop->is_in_loop_thread());
-    if (m_status == e_connecting)
-    {
-        status(e_disconnected);
+    // if (m_status == e_connecting)
+    // {
+        // status(e_disconnected);
         // 将 m_channel 从loop中撤销,然后重置 m_channel 
         // 然后,将m_fd返回
         int sockfd = remove();
-        retry(sockfd);
-    }
+        // retry(sockfd);
+    // }
 }
 
 void Connector::connect()
@@ -86,6 +95,9 @@ void Connector::connect()
     int ret = sockops::connect(sockfd, m_addr.sockaddr());
 
     int save_error = (ret == 0) ? 0 : errno;
+    
+    TRACELOG<<"Connector connection() :"<< strerror(save_error)<<" "<< (EINPROGRESS == save_error)<<" "<<sockfd;
+    
 
     switch (save_error)
     {
@@ -128,6 +140,7 @@ void Connector::connect()
 void Connector::connecting(int fd)
 {
     assert(mp_loop->is_in_loop_thread());
+    status(e_connecting);
     // 因为在 connecting() 之前,套接字没有连接完成,因此 m_channel 是空.
     assert(!m_channel);
     m_channel.reset(new Channel(mp_loop, fd));
@@ -150,6 +163,7 @@ void Connector::retry(int fd)
     // 如果 mb_connect 表示应该建立连接.
     if (mb_connect)
     {
+        TRACELOG<<"Connector::retry";
         // shared_from_this 的意思是,因为这个是异步的.因此当执行的时候,这个对象已经被析构了.
         // 因此将本对象的shared_ptr 传入.
         mp_loop->add_timer(
@@ -167,19 +181,21 @@ void Connector::retry(int fd)
 
 int Connector::remove()
 {
+    TRACELOG<<"Connector::remove() connect channel close: "<<m_channel->fd();
+
     m_channel->disable_all();
     m_channel->remove();
     int sockfd = m_channel->fd();
-
     // 这里为什么要在 loop 里执行?
-    mp_loop->add_task(
+    mp_loop->add_task_in_queue(
         std::bind(&Connector::reset, this));
     return sockfd;
 }
 
 void Connector::reset()
 {
-    m_channel->remove();
+    // TRACELOG<<"Connector::reset()";
+    m_channel.reset();
 }
 
 // 向服务器发起连接以后,当连接可读的时候,调用的回调函数.
@@ -188,10 +204,14 @@ void Connector::reset()
 // 此时,这个fd ,被移交给 TcpClient 中的 TcpConnection 对象
 // 所以,要移除 m_channel 
 // 这个类,只负责建立连接,并不负责具体的读写数据
+
+// 非阻塞式connect连接完成，被认为是套接字可写。
 void Connector::handle_write()
 {
-    if (m_status == e_connecting)
+    if (m_status == e_connecting) 
     {
+    TRACELOG<<"Connector::handle_write()";
+
         int sockfd = remove();
 
         int err = sockops::sock_error(sockfd);
@@ -224,7 +244,7 @@ void Connector::handle_write()
 
 void Connector::handle_error()
 {
-    // log
+    TRACELOG<<"Connector::handle_error(): "<<m_status;
     if (m_status == e_connecting)
     {
         int sockfd = remove();
@@ -235,4 +255,5 @@ void Connector::handle_error()
         // 出现了错误,也需要重连
         retry(sockfd);
     }
+    // stop();
 }

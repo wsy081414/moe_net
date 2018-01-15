@@ -42,3 +42,17 @@ SockAddr::SockAddr(String ip,uint16_t port,bool ipv6)
         sockops::fill_addr(ip.c_str(),port,&m_addr);
     }
 }
+
+
+String SockAddr::to_ip()
+{
+    char buf[64] = "";
+    sockops::to_ip(buf,sizeof(buf),sockaddr());
+    return buf;
+}
+String SockAddr::to_ip_port()
+{
+    char buf[64] = "";
+    sockops::to_ip_port(buf,sizeof(buf),sockaddr());
+    return buf;
+}

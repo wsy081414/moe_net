@@ -52,5 +52,6 @@ EventLoop *EventLoopThreadPool::next_loop()
     {
         m_next_loop=0;
     }
+    return loop;
 }
 

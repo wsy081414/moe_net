@@ -54,7 +54,7 @@ EventLoop::EventLoop()
       m_wakeup_fd(aux::event_fd()), mp_wakeup_channel(new Channel(this, m_wakeup_fd)),
       m_mutex(),s_poll_time(1000*8)
 {
-    TRACELOG << "EventLoop created " << this << " " << m_tid;
+    // TRACELOG << "EventLoop created " << this << " " << m_tid;
     if (t_loop != nullptr)
     {
         FATAlLOG << " thread " << m_tid << " has EventLoop";
@@ -85,29 +85,29 @@ void EventLoop::loop()
     mb_looping = true;
     mb_quited = false;
 
-    TRACELOG << "eventloop start " << m_tid;
+    // TRACELOG << "eventloop start " << m_tid;
 
     while (!mb_quited)
     {
         mc_active_channels.clear();
         m_poll_return = mp_poll->poll(s_poll_time, &mc_active_channels);
-
         mb_handling = true;
+        // TRACELOG<<"evenloop handle event";
 
         for (ChannelVector::iterator it = mc_active_channels.begin();
              it != mc_active_channels.end(); ++it)
         {
             (*it)->handle_event(m_poll_return);
+            // TRACELOG<<"fd:"<<(*it)->fd();
         }
 
         mb_handling = false;
 
+        
         handle_tasks();
-
-
     }
     mb_looping = false;
-    TRACELOG << " eventloop quit";
+    // TRACELOG << " eventloop quit";
 }
 
 void EventLoop::quit()
@@ -126,7 +126,7 @@ void EventLoop::add_in_queue(const Func &task)
         mc_tasks.push_back(task);
     }
 
-    if(!is_in_loop_thread() || m_handle_tasks)
+    if(!is_in_loop_thread(false) || m_handle_tasks)
     {
         wakeup();
     }
@@ -159,12 +159,10 @@ bool EventLoop::has_channel(Channel *channel)
 
 void EventLoop::wakeup()
 {
-    TRACELOG<<"wake up eventloop";
     uint64_t one = 1;
     ssize_t n = sockops::write(m_wakeup_fd, &one, sizeof(one));
     if (n != sizeof(one))
     {
-        // log
     }
 }
 
@@ -178,11 +176,11 @@ void EventLoop::wakeup_channel_handle_read()
     }
 }
 
-bool EventLoop::is_in_loop_thread()
+bool EventLoop::is_in_loop_thread(bool need)
 {
-    if(m_tid != everythread::tid())
+    if(m_tid != everythread::tid() && need)
     {
-        FATAlLOG<<"create thread: "<<m_tid <<" running thread: "<<everythread::tid();
+        FATAlLOG<<"create in thread: "<<m_tid <<" running thread: "<<everythread::tid();
     }
     return m_tid == everythread::tid();
 }
@@ -200,7 +198,7 @@ void EventLoop::cancel_timer(int64_t id)
 
 void EventLoop::add_task(const Func & task)
 {
-    if(is_in_loop_thread())
+    if(is_in_loop_thread(false))
     {
         task();
     }else{
@@ -210,6 +208,7 @@ void EventLoop::add_task(const Func & task)
 
 void EventLoop::handle_tasks()
 {
+    // TRACELOG<<"EventLoop::handle_tasks()";
     m_handle_tasks=true;
     std::vector<Func> tmp_vector;
     {

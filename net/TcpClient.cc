@@ -5,6 +5,7 @@
 using namespace moe;
 using namespace moe::net;
 
+Atomic64 TcpClient::m_tcp_index;
 
 TcpClient::TcpClient(EventLoop *loop,const SockAddr& sevaddr,const String& name)
     :mp_loop(loop),m_name(name),
@@ -26,6 +27,7 @@ TcpClient::~TcpClient()
 
 void TcpClient::connect()
 {
+    TRACELOG<<"TcpClient connect()";
     mb_connect=true;
     m_conn->start();
 }
@@ -53,13 +55,18 @@ void TcpClient::stop()
 // fd 从 connector 移交给 TcpClient 
 void TcpClient::new_conn(int fd)
 {
+    TRACELOG<<"TcpClient::new_conn ";
     assert(mp_loop->is_in_loop_thread());
 
     // 从 fd 中获取具体的 addr
     SockAddr peer_addr(sockops::peer_addr(fd));
     SockAddr local_addr(sockops::local_addr(fd));
 
-    TcpConnectionPtr tcp_conn(new TcpConnection(mp_loop,String("none"),fd,local_addr,peer_addr));
+    // int64_t index = m_tcp_index.inc_get();
+
+    TcpConnectionPtr tcp_conn(new TcpConnection(mp_loop,1,fd,local_addr,peer_addr));
+
+    TRACELOG<<"TcpClient : establis new connection "<<fd;
 
     tcp_conn->set_write_cb(m_write_cb);
     tcp_conn->set_conn_cb(m_conn_cb);

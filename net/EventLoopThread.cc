@@ -10,7 +10,7 @@ EventLoopThread::EventLoopThread(const InitFunc& cb,const String & name)
     :mp_loop(nullptr),mb_quit(false),m_thread(std::bind(&EventLoopThread::send_into_thread,this),name),
     m_mutex(),m_cond(m_mutex),init_cb(cb)
 {
-
+    // TRACELOG<<"EventLoopThread";
 }
 
 EventLoopThread::~EventLoopThread()
@@ -40,6 +40,7 @@ EventLoop *EventLoopThread::start()
 void EventLoopThread::send_into_thread()
 {
     EventLoop loop;
+    
     if(init_cb)
     {
         init_cb(&loop);
