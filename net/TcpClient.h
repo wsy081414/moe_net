@@ -8,6 +8,8 @@
 
 #include <moe_net/base/String.h>
 #include <moe_net/base/Mutex.h>
+#include <moe_net/base/Atomic.h>
+
 
 #include <moe_net/net/Connector.h>
 #include <moe_net/net/TcpConnection.h>
@@ -47,7 +49,7 @@ typedef std::shared_ptr<Connector> ConnectorPtr;
     void stop();
 
     EventLoop *loop() {return mp_loop;}
-    const String name() {return m_name;}
+    // const int64_t index() {return m_tcp_index;}
 
     TcpConnectionPtr connection()
     {
@@ -75,6 +77,8 @@ private:
 
     bool mb_connect;
     Mutex m_mutex;
+    static Atomic64 m_tcp_index;
+
 };
 }
 }

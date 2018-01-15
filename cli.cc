@@ -31,11 +31,11 @@ void func()
     sleep(1);
 }
 
-void func2(const TcpConnectionPtr& tcp_conn)
-{
-    tcp_conn->connect_destroy();
-    sleep(1);
-}
+// void func2(const TcpConnectionPtr& tcp_conn)
+// {
+//     tcp_conn->connect_destroy();
+//     sleep(1);
+// }
 
 int main()
 {
@@ -44,7 +44,7 @@ int main()
     // t.start();
     Logger::level(Logger::TRACE);
     // TRACELOG<<"haha";
-    // ThreadPool tp;
+    ThreadPool tp;
     // tp.start(4);
     // for(int i=0;i<10;i++)
     // {
@@ -66,6 +66,12 @@ int main()
     
     client.connect();
 
+    TRACELOG<<"connect () return";
+    TcpConnectionPtr tcp_ptr = client.connection(); 
+
+    TRACELOG<<"connection () return "<<bool(tcp_ptr) ;
+
+
     // EventLoop loop_serv;
     // SockAddr listen_addr("127.0.0.1",7777);
 
@@ -73,7 +79,9 @@ int main()
     // serv.set_threads(4);
 
     // serv.start();
-
-    sleep(100);
+    while(true)
+    {
+        sleep(100);
+    }
 }
 

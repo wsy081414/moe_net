@@ -37,15 +37,17 @@ private:
     bool mb_quited;
     bool mb_handling;
     const pid_t m_tid;
+
+    int m_wakeup_fd;
     std::unique_ptr<Channel> mp_wakeup_channel;
+
     std::unique_ptr<EpollPoller> mp_poll;
 
     Timestamp m_poll_return;
 
     Mutex m_mutex;
 
-    int m_wakeup_fd;
-    Channel *m_wakeup_channel;
+
     const int s_poll_time;
 
     TimerQueue m_timer_queue;
@@ -67,7 +69,7 @@ public:
 
     Timestamp poll_return();
 
-    bool is_in_loop_thread();
+    bool is_in_loop_thread(bool need= true);
     bool has_channel(Channel *);
 
 
@@ -78,6 +80,8 @@ public:
      int64_t add_timer(const TimerCallBack& ,int64_t when,bool repeat=false );
      void cancel_timer(int64_t );
      void add_task(const Func & );
+     void add_task_in_queue(const Func & task) {add_in_queue(task);};
+     
 };
 }
 }

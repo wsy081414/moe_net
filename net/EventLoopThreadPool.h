@@ -6,6 +6,8 @@
 #include <moe_net/base/Thread.h>
 #include <moe_net/net/EventLoop.h>
 #include <moe_net/net/EventLoopThread.h>
+#include <moe_net/base/ThreadPool.h>
+
 
 #include <memory>
 #include <functional>
@@ -17,7 +19,7 @@ namespace moe
 namespace net 
 {
 class EventLoop;
-class ThreadPool;
+// class ThreadPool;
 class EventLoopThread;
 
 class EventLoopThreadPool :aux::Noncopyable
@@ -30,7 +32,7 @@ public:
 
     void set_threads(int i) {m_thread_counts = i;}
 
-    void start(const ThreadInitCallback& cb);
+    void start(const ThreadInitCallback& cb=ThreadInitCallback());
 
     EventLoop *base_loop(){ return mp_base_loop;}
     EventLoop *next_loop();

@@ -64,7 +64,7 @@ public:
     {
         return mp_data;
     }
-         char* c_str() 
+    char* c_str() 
     {
         return mp_data;
     }

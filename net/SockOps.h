@@ -12,7 +12,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/socket.h>
-
+#include <moe_net/base/Logger.h>
+#include <assert.h>
 
 namespace moe
 {
@@ -33,6 +34,11 @@ inline struct sockaddr *sockaddr_cast(struct sockaddr_in *addr)
 inline struct sockaddr_in *sockaddr_in_cast(struct sockaddr *addr)
 {
     return static_cast<struct sockaddr_in *>(reinterpret_cast<void *>(addr));
+}
+
+inline const struct sockaddr_in *sockaddr_in_cast(const struct sockaddr *addr) 
+{
+    return static_cast<const struct sockaddr_in *>(reinterpret_cast<const void *>(addr));
 }
 
 inline ssize_t read(int sockfd, void *buf, size_t count)
@@ -70,8 +76,8 @@ inline int bind(int fd, const struct sockaddr *addr)
 }
 inline void listen(int fd)
 {
-    int ret = ::listen(fd,SOMAXCONN);
-    if(ret<0)
+    int ret = ::listen(fd, SOMAXCONN);
+    if (ret < 0)
     {
         // log
     }
@@ -109,14 +115,15 @@ inline void shutdown(int fd)
     }
 }
 
-inline void fill_addr(char *ip,uint16_t port, struct sockaddr_in *addr)
+inline void fill_addr(char *ip, uint16_t port, struct sockaddr_in *addr)
 {
     addr->sin_family = AF_INET;
-    addr->sin_port = htonl(port);
-    if (::inet_pton(AF_INET,ip, &addr->sin_addr) <= 0)
+    addr->sin_port = htons(port);
+    if (::inet_pton(AF_INET, ip, &addr->sin_addr) <= 0)
     {
-        // log
+        TRACELOG << "inet_pton error";
     }
+    char buf[64];
 }
 
 inline int sock_error(int fd)
@@ -127,27 +134,60 @@ inline int sock_error(int fd)
     if (::getsockopt(fd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
     {
         return errno;
-    }else{
+    }
+    else
+    {
         return optval;
     }
 }
 
-inline struct sockaddr_in peer_addr(int fd)
+inline struct sockaddr_in peer_addr(int sockfd)
 {
-    sockaddr_in tmp;
-    bzero(&tmp,sizeof(tmp));
-    return tmp;
+    sockaddr_in peer_addr;
+    bzero(&peer_addr, sizeof(peer_addr));
+
+    socklen_t addrlen = static_cast<socklen_t>(sizeof peer_addr);
+    if (::getpeername(sockfd, sockaddr_cast(&peer_addr), &addrlen) < 0)
+    {
+        TRACELOG << "sockets::local_addr";
+    }
+
+    return peer_addr;
 }
 
-inline struct sockaddr_in local_addr(int fd)
+inline struct sockaddr_in local_addr(int sockfd)
 {
-    sockaddr_in tmp;
-    bzero(&tmp,sizeof(tmp));
-    
-    return tmp;
+    sockaddr_in local_addr;
+    bzero(&local_addr, sizeof(local_addr));
+
+    socklen_t addrlen = static_cast<socklen_t>(sizeof local_addr);
+    if (::getpeername(sockfd, sockaddr_cast(&local_addr), &addrlen) < 0)
+    {
+        TRACELOG << "sockets::local_addr";
+    }
+
+    return local_addr;
 }
 
 
+inline void to_ip(char *buf,size_t size,const struct sockaddr* addr)
+{
+    if (addr->sa_family == AF_INET)
+  {
+    assert(size >= INET_ADDRSTRLEN);
+    const struct sockaddr_in* addr4 = sockaddr_in_cast(addr);
+    ::inet_ntop(AF_INET, &addr4->sin_addr, buf, static_cast<socklen_t>(size));
+  }
+}
+inline void to_ip_port(char *buf,size_t size,const struct sockaddr* addr)
+{
+  to_ip(buf,size, addr);
+  size_t end = ::strlen(buf);
+  const struct sockaddr_in* addr4 = sockaddr_in_cast(addr);
+  uint16_t port = ntohs(addr4->sin_port);
+  assert(size > end);
+  snprintf(buf+end, size-end, ":%u", port);
+}
 }
 }
 }

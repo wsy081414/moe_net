@@ -2,7 +2,7 @@
 #define MOE_TIMESTAMP_H
 
 #include <moe_net/base/String.h>
-
+#include <utility>
 namespace moe 
 {
 
@@ -37,6 +37,10 @@ public:
     int64_t micro() const
     {
         return m_micro;
+    }
+    void swap(Timestamp& rhs)
+    {
+        std::swap(m_micro,rhs.m_micro);
     }
 private:
     int64_t now();

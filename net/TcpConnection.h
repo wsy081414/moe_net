@@ -6,8 +6,9 @@
 #include <moe_net/base/String.h>
 #include <moe_net/net/SockAddr.h>
 #include <moe_net/base/RingBuffer.h>
-
+#include <moe_net/net/HttpContext.h>
 #include <memory>
+
 
 /*
 想一下,这个类,干了什么
@@ -30,12 +31,12 @@ class Socket;
 class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpConnection>
 {
   public:
-    TcpConnection(EventLoop *loop, const String &name, int fd,
+    TcpConnection(EventLoop *loop, const int64_t &index, int fd,
                   const SockAddr local_addr, const SockAddr peer_addr);
     ~TcpConnection();
 
     EventLoop *loop() { return mp_loop; }
-    const String name() { return m_name; }
+    const int64_t index() { return m_index; }
     const SockAddr &local_addr() { return m_local_addr; }
     const SockAddr &peer_addr() { return m_peer_addr; }
 
@@ -46,6 +47,8 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
     void send(const char *buf, size_t len);
 
     void send(const String &msg) { send(msg.c_str(), msg.size()); }
+    void send(RingBuffer *buf);
+    
 
     void shutdown();
 
@@ -64,6 +67,9 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
     void connect_establised();
     void connect_destroy();
 
+    void context(const HttpContext& v) {m_context =v;}
+    HttpContext* context() {return &m_context;}
+    
   private:
     enum Status
     {
@@ -78,7 +84,7 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
     void handle_error();
     void handle_close();
 
-    void send_run_in_loop(const char *bud, size_t len);
+    void send_run_in_loop(const String&);
     void shutdown_run_in_loop();
     void force_close_run_in_loop();
     void start_read_run_in_loop();
@@ -86,10 +92,10 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
 
     void start_write_run_in_loop();
 
-    void status(Status);
+    void status(Status v) {m_status = v;};
 
     EventLoop *mp_loop;
-    const String m_name;
+    const int64_t m_index;
     Status m_status;
 
     bool mb_reading;
@@ -110,6 +116,8 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
 
     RingBuffer mc_output;
     RingBuffer mc_input;
+
+    HttpContext m_context;
 };
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
