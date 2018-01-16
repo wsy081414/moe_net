@@ -44,7 +44,7 @@ class HttpRequest
     bool method(const char *start, const char *end)
     {
         std::string v(start, end);
-        TRACELOG<<"HttpRequest::method : "<<v.c_str()<< " "<<(v == "GET") ;
+        // TRACELOG<<"HttpRequest::method : "<<v.c_str();
         if (v == "GET")
         {
             m_method = e_get;

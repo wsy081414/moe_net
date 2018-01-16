@@ -94,7 +94,7 @@ void TcpServer::new_conn(int fd,const SockAddr &peer_addr)
 
 void TcpServer::remove_conn(const TcpConnectionPtr conn)
 {
-    TRACELOG<<"TcpServer::remove_conn";
+    // TRACELOG<<"TcpServer::remove_conn";
     
     mp_loop->add_task(
         std::bind(&TcpServer::remove_conn_run_in_loop,this,conn)
@@ -102,7 +102,7 @@ void TcpServer::remove_conn(const TcpConnectionPtr conn)
 }
 void TcpServer::remove_conn_run_in_loop(const TcpConnectionPtr conn)
 {
-    TRACELOG<<"TcpServer::remove_conn_run_in_loop";
+    // TRACELOG<<"TcpServer::remove_conn_run_in_loop";
     assert(mp_loop->is_in_loop_thread());
 
     size_t n = mc_connections.erase(conn->index());

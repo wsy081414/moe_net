@@ -1,16 +1,12 @@
 #ifndef MOE_ACCEPTOR_H
 #define MOE_ACCEPTOR_H
 
-
 #include <moe_net/base/Noncopyable.h>
 #include <moe_net/net/Channel.h>
 #include <moe_net/net/Socket.h>
 #include <moe_net/net/SockAddr.h>
 
-
 #include <functional>
-
-
 
 /*
 这个类,就是封装了 socket ,讲一个 socket 转为 监听描述符
@@ -22,29 +18,28 @@
 回调函数的参数是 (fd,peer_addr) ,这样一个新连接的所有信息都有了.   
 
 */
-namespace moe 
+namespace moe
 {
-namespace net 
+namespace net
 {
 
 class EventLoop;
 class SockAddr;
 
-class Acceptor :aux::Noncopyable
+class Acceptor : aux::Noncopyable
 {
-public:
-    typedef std::function<void (int,const SockAddr&)> NewConnCallBack;
+  public:
+    typedef std::function<void(int, const SockAddr &)> NewConnCallBack;
 
-    Acceptor(EventLoop *loop,const SockAddr &listen_addr,bool reuseport);
+    Acceptor(EventLoop *loop, const SockAddr &listen_addr, bool reuseport);
     ~Acceptor();
 
-    void set_net_conn_cb(const NewConnCallBack& cb) {m_new_conn_cb=cb;}
+    void set_net_conn_cb(const NewConnCallBack &cb) { m_new_conn_cb = cb; }
 
-    bool listening() {return mb_listening;}
+    bool listening() { return mb_listening; }
     void listen();
 
-private:
-
+  private:
     void handle_read();
     EventLoop *mp_loop;
     Socket m_socket;

@@ -30,7 +30,7 @@ public:
     bool parse_line(const char *,const char *);
     bool is_parse_finish() 
     {
-        TRACELOG<<"is_parse_finish : "<<(m_status==e_parse_over);
+        // TRACELOG<<"is_parse_finish : "<<(m_status==e_parse_over);
         return m_status==e_parse_over;
     }
     HttpRequest request() {return m_req;}
