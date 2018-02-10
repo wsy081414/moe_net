@@ -1,3 +1,12 @@
+/*
+TcpServer 类，主要是封装了 Accept 和 TcpConnection EventLoopThreadPool
+
+TcpServer 类，首先使用 Accept 来监听，然后设置 Accept 可读的回调函数为 new_conn ，
+new_conn 会进行 内部会进行 Accept 的accept，然后获得 sockfd ，本端和对端的 sockaddr 
+然后 会从 EventLoopThreadPool 选取一个 EventLoop ，使用这四个数据新建一个  TcpConnection
+并且设置 TcpConnection 的各种回调函数（这些函数是由使用 TcpServer 的的类新建的）
+然后由 TcpConnection 具体的处理一个链接的各种事件
+*/
 #ifndef MOE_TCPSERVER_H
 #define MOE_TCPSERVER_H
 
@@ -17,14 +26,6 @@
 #include <memory>
 #include <string>
 
-/*
-这个类封装了 Acceptor 和 TcpConnection 
-
-获取连接以后,调用回调函数,建立一个 TcpConnection 对象,放入 mc_connection .
-mc_connection 是一个map,但是 map<sting,TcpConnection> 
-后面改为 atomic64 应该更好啊.
-
-*/
 namespace moe
 {
 namespace net

@@ -1,3 +1,12 @@
+/*
+LogBuffer 类，主要封装了一个 char[] 用来存储日志信息。提供了各种操作该 数组的函数
+同时这是一个模板类，可以自定义 数组的长度
+
+然后， LogStream 类，则是分装了 LogBuffer 的各类操作。
+LogStream 其实也就是主要是将 LogBuffer 添加的操作转化为 << 操作。
+
+*/
+
 #ifndef MOE_LOGSTREAM_H
 #define MOE_LOGSTREAM_H
 
@@ -53,7 +62,6 @@ class LogBuffer : aux::Noncopyable
     String to_sting() { return String(&m_data[0], size()); }
     // 只为添加数字而用的。
     void add(size_t len) {mp_cur +=len;}
-    void print() {printf("%s",to_sting().c_str());}
 };
 }
 
@@ -67,6 +75,9 @@ class LogStream : aux::Noncopyable
 
     static const int max_num_size;
   public:
+    
+    String to_sting() { return m_buffer.to_string(); }
+
     LogStream &operator<<(bool v)
     {
         m_buffer.append(v ? '1' : '0');
@@ -113,8 +124,6 @@ class LogStream : aux::Noncopyable
         m_buffer.append(str,len);
     }
     void reset(){m_buffer.reset();}
-    void print(){m_buffer.print();}
-
 };
 }
 

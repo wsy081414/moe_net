@@ -37,16 +37,13 @@ void HttpServer::conn_cb(const TcpConnectionPtr &conn)
 
 void HttpServer::msg_cb(const TcpConnectionPtr &conn, RingBuffer *buf, Timestamp time)
 {
-    TRACELOG<<" HttpServer::msg_cb";
     HttpContext *context = conn->context();
 
     if (!context->parse_req(buf, time))
     {
         conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
         conn->shutdown();
-    }
-
-    if(context->is_parse_finish())
+    }else if(context->is_parse_finish())
     {
         request_cb(conn,context->request());
         context->reset();
@@ -55,8 +52,6 @@ void HttpServer::msg_cb(const TcpConnectionPtr &conn, RingBuffer *buf, Timestamp
 
 void HttpServer::request_cb(const TcpConnectionPtr& conn, const HttpRequest& req)
 {
-    TRACELOG<<" HttpServer::request_cb";
-    
     const std::string connection= req.header("Connection");
     bool close = (connection == "close") || 
                             (req.version()==HttpRequest::e_http10 && connection != "Keep-Alive");
@@ -71,5 +66,4 @@ void HttpServer::request_cb(const TcpConnectionPtr& conn, const HttpRequest& req
     {
         conn->shutdown();
     }
-
 }

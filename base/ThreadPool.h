@@ -1,3 +1,7 @@
+/*
+ThreadPool 类，使用 Thread 做了为一个线程池。
+
+*/
 #ifndef MOE_THREAD_POOL_H
 #define MOE_THREAD_POOL_H
 
@@ -14,7 +18,6 @@
 namespace moe 
 {
 
-
 class ThreadPool : aux::Noncopyable
 {
 public:
@@ -25,7 +28,7 @@ public:
     void max_queue(int max_size) {m_max_queue = max_size;}
     void set_init_callback(Task &t) {m_init_cb = t;}
 
-    void start(int thread_count);
+    void start(int thread_count=4);
     void stop();
 
     void add_task(const Task &);
@@ -50,7 +53,6 @@ private:
     size_t m_max_queue;
     
     bool mb_started;
-
 };
 
 }

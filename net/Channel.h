@@ -84,7 +84,7 @@ class Channel : aux::Noncopyable
     }
     void disable_all()
     {
-        m_events = 0;
+        m_events = s_none_event;
         update();
     }
 

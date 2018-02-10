@@ -7,6 +7,31 @@
 
 #include <functional>
 
+namespace moe
+{
+namespace aux
+{
+using namespace moe::net;
+
+void default_connect_cb(const TcpConnectionPtr& conn)
+{
+    if(conn->status == e_connected)
+    {
+        INFOLOG<<"connect in";
+    }else{
+        INFOLOG<<"connect close";
+    }
+}   
+
+void default_msg_cb(const TcpConnectionPtr& conn,RingBuffer *buf,Timestamp)
+{
+    buf->read_skip_all();
+    INFOLOG<<"message in";
+
+} 
+}
+}
+
 using namespace moe;
 using namespace moe::net;
 
@@ -29,8 +54,6 @@ TcpConnection::TcpConnection(EventLoop *loop, const int64_t &index, int fd,
     m_channel->set_close_cb(
         std::bind(&TcpConnection::handle_close, this));
 
-    // log
-
     m_socket->set_keepalive(true);
 }
 
@@ -41,14 +64,12 @@ TcpConnection::~TcpConnection()
 
 void TcpConnection::send(const char *buf, size_t len)
 {
-    // TRACELOG<<"TcpConnection::send : "<<(m_status == e_connected);
     // 当连接成功有才能发送
     if (m_status == e_connected)
     {
         mp_loop->add_task(
             std::bind(&TcpConnection::send_run_in_loop, this, String(buf, len)));
     }
-    // TRACELOG<<"TcpConnection::send end";
 }
 
 void TcpConnection::send_run_in_loop(const String &str)
@@ -65,12 +86,9 @@ void TcpConnection::send_run_in_loop(const String &str)
     bool has_fault = false;
     if (m_status == e_disconnected)
     {
-        // log
+        ERRORLOG<<"TcpConnection::send into closed Connection";
         return;
     }
-
-    TRACELOG << "TcpConnection::send_run_in_loop  send direct :" << (!m_channel->is_writing() && mc_output.read_size() == 0);
-    // TRACELOG<<"TcpConnection::send_run_in_loop  m_fd : "<<m_fd<<" channel fd: "<<m_channel->fd();
 
     // 判断 m_channel 也就是 m_fd 可写
     // 可写,并且没有等待写出的数据,那么直接写出
@@ -79,32 +97,28 @@ void TcpConnection::send_run_in_loop(const String &str)
     {
 
         nwrote = sockops::write(m_channel->fd(), msg, len);
-        // TRACELOG<<"TcpConnection::send_run_in_loop  write n : "<<nwrote;
 
         if (nwrote >= 0)
         {
             remain = len - nwrote;
-            if (remain == 0 && m_write_cb)
+            if (remain == 0 && m_write_complete_cb)
             {
                 // 写完以后,就在loop中调用,问题是,为什么又在loop中?
                 mp_loop->add_task(
-                    std::bind(m_write_cb, shared_from_this()));
+                    std::bind(m_write_complete_cb, shared_from_this()));
             }
         }
         else
         {
             // 发生了错误
             nwrote = 0;
-            // log
+            ERRORLOG<<"TcpConnection::send error: "<<strerror(errno);
             has_fault = true;
         }
     }
 
-    // TRACELOG<<"TcpConnection::send_run_in_loop  save send :"<<
-    //         (!has_fault && remain > 0)<<" remain :"<<remain;
-
     // 没有发生错误,而且上一次写数据没有写完
-    // 就将这些数据保存起来
+    // 就将这些数据保存起来 
     if (!has_fault && remain > 0)
     {
         size_t hasnt_out = mc_output.read_size();
@@ -112,11 +126,14 @@ void TcpConnection::send_run_in_loop(const String &str)
         if (hasnt_out + remain >= m_hight_water &&
             hasnt_out < m_hight_water && m_hight_water_cb)
         {
-            // m_hight_water_cb();
+            m_hight_water_cb();
         }
+
         mc_output.append(msg + nwrote, remain);
 
-        if (m_channel->is_writing())
+        // 经过上面的操作，缓冲区是由数据需要写出到内核的
+        // 因此，此时如果没有在监听写时间，那么需要监听写事件
+        if (!m_channel->is_writing())
         {
             // 使得 sockfd 监听可写.
             // 在epoll中,
@@ -128,12 +145,14 @@ void TcpConnection::send_run_in_loop(const String &str)
     }
 }
 
-// 我就不明白了,为什么要在 loop 中
+
 void TcpConnection::shutdown()
 {
     if (m_status == e_connected)
     {
         status(e_disconnecting);
+
+        // 在 loop 中的原因是，让之前的写数据的写完了，一个线程在读，这个直接关闭了
         mp_loop->add_task(
             std::bind(&TcpConnection::shutdown_run_in_loop, this));
     }
@@ -141,6 +160,10 @@ void TcpConnection::shutdown()
 void TcpConnection::shutdown_run_in_loop()
 {
     assert(mp_loop->is_in_loop_thread());
+
+    // is_writing() 表示是否在监听写。如果在监听写，那么不能关闭
+    // 但是此时 m_status == e_disconnecting
+    // 在写完数据以后，会判断依次 m_status ,是会关闭的
     if (!m_channel->is_writing())
     {
         m_socket->shutdown();
@@ -149,7 +172,7 @@ void TcpConnection::shutdown_run_in_loop()
 
 void TcpConnection::force_close()
 {
-    if (m_status == e_connecting || m_status == e_connected)
+    if (m_status == e_disconnecting || m_status == e_connected)
     {
         mp_loop->add_task(
             std::bind(&TcpConnection::force_close_run_in_loop, this));
@@ -159,7 +182,7 @@ void TcpConnection::force_close()
 void TcpConnection::force_close_run_in_loop()
 {
     assert(mp_loop->is_in_loop_thread());
-    if (m_status == e_connecting || m_status == e_connected)
+    if (m_status == e_disconnecting || m_status == e_connected)
     {
         handle_close();
     }
@@ -199,13 +222,11 @@ void TcpConnection::stop_read_run_in_loop()
 
 void TcpConnection::handle_read(Timestamp receive_time)
 {
-    // TRACELOG<<"TcpConnection::handle_read";
     assert(mp_loop->is_in_loop_thread());
     int save_errno;
 
-    // 读进 mc_input 中
     int n = mc_input.read_from_fd(m_channel->fd(), &save_errno);
-    // TRACELOG<<"TcpConnection::handle_read from "<<m_channel->fd()<<" receive : "<<n<<" errno: "<<strerror(errno);
+
     if (n > 0)
     {
         m_msg_cb(shared_from_this(), &mc_input, receive_time);
@@ -217,7 +238,6 @@ void TcpConnection::handle_read(Timestamp receive_time)
     else
     {
         errno = save_errno;
-        // log
         handle_error();
     }
 }
@@ -238,12 +258,13 @@ void TcpConnection::handle_write()
                 // 写完以后那么,确实不用再监听内核的fd缓冲区可写了
                 m_channel->disable_write();
 
-                if (m_write_cb)
+                if (m_write_complete_cb)
                 {
                     mp_loop->add_task(
-                        std::bind(&TcpConnection::m_write_cb, this));
+                        std::bind(&TcpConnection::m_write_complete_cb, this));
                 }
-                // 表示写完了,就断开连接
+
+                // e_disconnecting 在 shudown 时，还有数据没写出，就没有关闭，但是此时写完了，因此需要关闭
                 if (m_status == e_disconnecting)
                 {
                     shutdown_run_in_loop();
@@ -252,36 +273,34 @@ void TcpConnection::handle_write()
         }
         else
         {
-            // log
+            ERRORLOG<<"TcpConnection::handle_write error";
         }
     }
     else
     {
-        // log
+        ERRORLOG<<"TcpConnection::handle_write no data need write";
     }
 }
 
 void TcpConnection::handle_close()
 {
-    // TRACELOG<<"TcpConnection::handle_close()";
     assert(mp_loop->is_in_loop_thread());
-
-    // log
 
     assert(m_status == e_connecting || m_status == e_connected);
     status(e_disconnected);
 
     m_channel->disable_all();
-    // m_channel->remove();
 
+    // 这里 m_close_cb 是 TcpServer 中 map 删除 TcpConnection 的函数
+    // 删除完以后，又调用  connect_destroy
     TcpConnectionPtr guard(shared_from_this());
-    //  muduo 还调用了 m_conn_cb ,为啥?
     m_close_cb(guard);
 }
 
 void TcpConnection::handle_error()
 {
-    // log一下
+    int errno_save=sockops::sock_error(m_fd);
+    ERRORLOG<<"TcpConnection::handle_error: "<<strerror(errno_save);
 }
 
 // connect_establised 只是监听读
@@ -290,6 +309,7 @@ void TcpConnection::connect_establised()
     status(e_connected);
     assert(mp_loop->is_in_loop_thread());
     m_channel->enable_read();
+    m_conn_cb(shared_from_this());
 }
 
 // 只是 不在监听读,从 epoll 移除

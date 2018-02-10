@@ -19,9 +19,7 @@ private:
     const Noncopyable &operator=(const Noncopyable);
 
 };
-
 }
-
 }
 
 

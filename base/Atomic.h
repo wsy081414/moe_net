@@ -40,7 +40,6 @@ public:
     {
         return __sync_lock_test_and_set(&m_value,new_value);
     }
-
 };
 }
 
@@ -52,3 +51,4 @@ typedef aux::Atomic<int64_t> Atomic64;
 
 
 #endif //MOE_ATOMIC_H
+

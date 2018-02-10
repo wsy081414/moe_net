@@ -10,7 +10,7 @@ EventLoopThread::EventLoopThread(const InitFunc& cb,const String & name)
     :mp_loop(nullptr),mb_quit(false),m_thread(std::bind(&EventLoopThread::send_into_thread,this),name),
     m_mutex(),m_cond(m_mutex),init_cb(cb)
 {
-    // TRACELOG<<"EventLoopThread";
+    INFOLOG<<"EventLoopThread : "<<name<<" start";
 }
 
 EventLoopThread::~EventLoopThread()
@@ -21,6 +21,7 @@ EventLoopThread::~EventLoopThread()
         mp_loop->quit();
         m_thread.join();
     }
+    INFOLOG<<"EventLoopThread : "<<name<<" destory";
 }
 
 EventLoop *EventLoopThread::start()
@@ -52,8 +53,6 @@ void EventLoopThread::send_into_thread()
         m_cond.notify();
     }
     
-    // TRACELOG<<"EventLoopThread start";
-
     loop.loop();
     mp_loop=nullptr;
 }

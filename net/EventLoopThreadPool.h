@@ -1,3 +1,13 @@
+/*
+EventLoopThreadPool 类，在应用中是一个干活的类。
+这个类不是 ThreadPool ， 这个类直接实例化了几个 EventLoop ，用来以后干活用的。
+同时一个 next_loop() 简单的做负载均衡。
+
+EventLoopThreadPool 仍然要绑定一个 base_loop 的原因在于， base_loop 中获取需要处理的套接字，然后根据 
+next_loop() 分配给 EventLoopThreadPool 中的 EventLoop。
+
+*/
+
 #ifndef MOE_EVENTLOOPTHREADPOOL_H
 #define MOE_EVENTLOOPTHREADPOOL_H
 
@@ -37,7 +47,7 @@ public:
     EventLoop *base_loop(){ return mp_base_loop;}
     EventLoop *next_loop();
 
-    std::vector<EventLoop *> all_loops();
+    // std::vector<EventLoop *>& all_loops() ;
     
     bool started() {return mb_started;}
 

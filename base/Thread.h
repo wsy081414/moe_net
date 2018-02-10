@@ -14,7 +14,6 @@ class Thread : aux::Noncopyable
 {
 public:
     typedef std::function<void ()> ThreadFunc;
-
 private:
 
     ThreadFunc m_func;
@@ -35,9 +34,6 @@ public:
     
     pid_t tid() {return m_tid;}
     const String& name() {return m_name;}
-
-
-
 };
 }
 

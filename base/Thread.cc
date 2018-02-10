@@ -1,17 +1,15 @@
 #include <moe_net/base/Thread.h>
 
 #include <sys/prctl.h>
+#include <moe_net/base/Logger.h>
 
 
 using namespace moe;
 
 namespace moe
 {
-
-
 namespace aux 
 {
-
 struct ThreadData 
 {
     typedef moe::Thread::ThreadFunc ThreadFunc;
@@ -28,15 +26,20 @@ struct ThreadData
     void run_in_thread()
     {
         *m_tid = moe::everythread::tid();
-        mp_sem->count_down();
-        // moe::everythread::t_name = m_name.empty()?"moe thread":m_name.c_str();
         ::prctl(PR_SET_NAME,m_name);
-        
-        
-        m_func();
-
+        mp_sem->count_down();
+        try
+        {
+            m_func();
+        }catch(const std::exception& ex)
+        {
+            FATAlLOG<<"exception caught in Thread: "<<m_name.c_str()
+                    <<" reason: "<<ex.what();
+        }catch(...)
+        {
+            INFOWARN<<"unknown exception caught in Thread: "<<m_name.c_str();
+        }
     }
-
 };
 
 void *send_into_pthread(void *arg)
@@ -46,7 +49,6 @@ void *send_into_pthread(void *arg)
     delete data;
     return NULL;
 }
-
 }
 }
 
@@ -64,6 +66,7 @@ Thread::~Thread()
 {
     if(m_started && !m_joined)
     {
+        // 线程接受以后自行收尸，不会产生僵尸进程
         pthread_detach(m_pthread); 
     }
 }
@@ -78,14 +81,14 @@ void Thread::start()
     {
         m_started = false;
         delete data;
-        // log
+        FATAlLOG<<"Failed in pthread_create";
     }else{
         m_sem.wait();
         assert(m_tid>0);
     }
 }
 
-
+// 阻塞等待线程结束
 void Thread::join()
 {
     if(m_started && !m_joined)

@@ -1,9 +1,43 @@
+/*
+
+int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);
+
+typedef union epoll_data {
+    void *ptr;
+    int fd;
+    __uint32_t u32;
+    __uint64_t u64;
+} epoll_data_t;
+
+struct epoll_event {
+    __uint32_t events; 
+    epoll_data_t data; 
+};
+
+epoll_data_t 存在的意义：
+网络模型有两种， reactor 和 proactor ：
+
+reactor 模型是同步模型，也就是说注册文件描述符，当文件描述符可读写或是错误的时候通知用户，
+然后由用户去调用相关程序判断发生的事件并且执行对应的操作。
+
+proactor 模型则是异步模型，指定要读写的数据，当数据读写完毕的时候通知用户。
+
+两者都是通过io复用来通知用户。
+
+大多库都是 reactor 模型， asio 是 proactor 模型。
+
+使用 reactor 模型时，因为不同的文件描述符要执行对应的不同的操作，因此每个文件描述符都要绑定读写关闭等操作。
+而 epoll_event 中一个是事件，另一个  epoll_data_t 是一个联合体，其中的指针就可以指向文件描述符绑定的读写操作。
+这样就不需要额外的 ，map 容器来建立对应关系。
+
+*/
 #include <moe_net/net/EpollPoller.h>
 
 #include <moe_net/net/EventLoop.h>
 #include <moe_net/net/Channel.h>
 
 #include <moe_net/net/SockOps.h>
+#include <moe_net/base/Logger.h>
 
 #include <sys/epoll.h>
 #include <errno.h>
@@ -17,11 +51,11 @@ using namespace moe::net;
 // https://stackoverflow.com/questions/10011252/whats-the-advantage-of-using-epoll-create1-instead-of-epoll-create
 // epoll_create 是一个老的，旧的
 EpollPoller::EpollPoller(EventLoop *loop)
-    : mp_loop(loop), m_epoll_fd(::epoll_create1(EPOLL_CLOEXEC)),mc_events(16)
+    : mp_loop(loop), m_epoll_fd(::epoll_create1(EPOLL_CLOEXEC)), mc_events(16)
 {
-    if (m_epoll_fd)
+    if (m_epoll_fd < 1)
     {
-        // log
+        FATAlLOG << "EpollPoller init epollfd error";
     }
 }
 EpollPoller::~EpollPoller()
@@ -31,18 +65,13 @@ EpollPoller::~EpollPoller()
 
 Timestamp EpollPoller::poll(int time_out, ChannelVector *wall_fill)
 {
-    // log
-    
-    // TRACELOG<<"fd:"<<m_epoll_fd<<" size:"<<mc_events.size()<<" timeout:"<<time_out;
+
     int active_counts = ::epoll_wait(m_epoll_fd, &*mc_events.begin(),
                                      static_cast<int>(mc_events.size()),
                                      time_out);
-    TRACELOG<<"epoll poll return ,counts:"<<active_counts<<" errno: "<<strerror(errno);
-    int err_tmp = errno;
-    Timestamp poll_return;
+
     if (active_counts > 0)
     {
-        // log
         fill_active_vector(active_counts, wall_fill);
 
         // 预先调整
@@ -53,13 +82,12 @@ Timestamp EpollPoller::poll(int time_out, ChannelVector *wall_fill)
     }
     else if (active_counts == 0)
     {
-        // log
+        TRACELOG << "epoll poll return : nothing";
     }
     else
     {
-        // log
+        TRACELOG << "epoll poll return , errno: " << strerror(errno);
     }
-
     return poll_return;
 }
 
@@ -77,64 +105,35 @@ void EpollPoller::fill_active_vector(int active_counts, ChannelVector *will_fill
 
 void EpollPoller::update(Channel *channel)
 {
-    
+
     assert(is_in_loop_thread());
     const int status = channel->status();
-    // log
+
     int fd = channel->fd();
 
-    // TRACELOG<<"EpollPoller::update(Channel *channel) : "<<fd<<" "<<status;
-
-    // if (status == s_new || status == s_old)
-    // {
-        // 新添加的 channel
-        if (status == s_new)
-        {
-            assert(mc_channels.find(fd) == mc_channels.end());
-            mc_channels[fd] = channel;
-            update_epoll(EPOLL_CTL_ADD, channel);
-
-        }
-        else if (status == s_old)
-        {
-            // 修改已有的
-            assert(mc_channels.find(fd) != mc_channels.end());
-            update_epoll(EPOLL_CTL_MOD, channel);
-        }
+    if (status == s_new)
+    {
+        assert(mc_channels.find(fd) == mc_channels.end());
+        mc_channels[fd] = channel;
+        update_epoll(EPOLL_CTL_ADD, channel);
         channel->status(s_old);
-    // }
-    // else
-    // {
-        // // 删除已有的
-
-        // assert(mc_channels.find(fd) != mc_channels.end());
-        // assert(mc_channels[fd] == channel);
-
-        // assert(status == s_del);
-
-        // // 不在监听
-        // if (channel->is_no_event())
-        // {
-        //     update_epoll(EPOLL_CTL_DEL, channel);
-        //     channel->status(s_del);
-        // }
-        // else
-        // {
-        //     // 更新
-        //     update_epoll(EPOLL_CTL_MOD, channel);
-        // }
-    // }
+    }
+    else if (status == s_old)
+    {
+        assert(mc_channels.find(fd) != mc_channels.end());
+        update_epoll(EPOLL_CTL_MOD, channel);
+    }
 }
 
 void EpollPoller::remove(Channel *channel)
 {
     assert(is_in_loop_thread());
     int fd = channel->fd();
-    
-    // TRACELOG<<"EpollPoller::remove(Channel *channel) : "<<fd;
 
     assert(mc_channels.find(fd) != mc_channels.end());
     assert(mc_channels[fd] == channel);
+
+    // 删除的 channel 必须是没有任何监听事件的
     assert(mc_channels[fd]->is_no_event());
 
     int status = channel->status();
@@ -159,11 +158,9 @@ void EpollPoller::update_epoll(int cmd, Channel *channel)
 
     int fd = channel->fd();
 
-    // log
-
     if (::epoll_ctl(m_epoll_fd, cmd, fd, &event) < 0)
     {
-        FATAlLOG<<"epoll_ctl error";
+        FATAlLOG << "epoll_ctl error";
     }
 }
 

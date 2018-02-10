@@ -13,12 +13,12 @@ Acceptor::Acceptor(EventLoop *loop, const SockAddr &listen_addr, bool reuseport)
       mb_listening(false),
       m_channel(mp_loop, m_socket.fd())
 {
+    m_socket.set_reuse_port(reuseport);
+    m_socket.set_reuse_addr(reuseport);
+
     m_channel.set_read_cb(
         std::bind(&Acceptor::handle_read, this));
     m_socket.bind(listen_addr);
-    m_socket.set_reuse_port(true);
-    m_socket.set_reuse_addr(true);
-    TRACELOG << "ACCEPTOR fd: " << m_socket.fd();
 }
 
 Acceptor::~Acceptor()
@@ -29,23 +29,19 @@ Acceptor::~Acceptor()
 
 void Acceptor::handle_read()
 {
-    // TRACELOG<<"Acceptor::handle_read()";
     assert(mp_loop->is_in_loop_thread());
     SockAddr peer_addr;
-    // TRACELOG<<"Acceptor::handle_read() accept";
 
-    // 函数返回的时候 peer_addr 里面就包含了对端的地址.
+    // peer_addr 被填充
     int connfd = m_socket.accept(peer_addr);
 
-    TRACELOG << "peer_addr addr :" << peer_addr.to_ip_port().c_str();
+    TRACELOG << "Acceptor::handle_read peer_addr :" << peer_addr.to_ip_port().c_str();
 
     if (connfd > 0)
     {
         // 新连接以后,要么调用回调函数,直接处理.否则就直接关闭链接.
         if (m_new_conn_cb)
         {
-            // TRACELOG<<"Acceptor m_new_conn_cb()";
-
             m_new_conn_cb(connfd, peer_addr);
         }
         else
@@ -56,14 +52,17 @@ void Acceptor::handle_read()
     else
     {
         // 如果 accept 返回的文件描述符 < 0 ,表示是错误,应该要处理错误
-        // log
+        ERRORLOG<<"Acceptor::handle_read error: "<<strerror(errno);
+
+        /* 当 errno==EMFILE ,也就是文件描述符上限的时，muduo 的方法是：
+            在 Accept 的构造的时候就额外的占用了一个 文件描述符 idle，
+            当 EMFILE 的时候就关闭 idle ，然后accept，然后关闭 idle
+        */
     }
-    // TRACELOG<<"Acceptor::handle_read() end";
 }
 
 void Acceptor::listen()
 {
-    TRACELOG << "Acceptor::listen()";
     assert(mp_loop->is_in_loop_thread());
     m_socket.listen();
     mb_listening = true;

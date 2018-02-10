@@ -36,8 +36,8 @@ void ThreadPool::start(int thread_counts)
             std::bind(&ThreadPool::seed_into_thread, this),
             id));
         mc_threads[i]->start();
-        TRACELOG<<"thread : "<<i+1<<" start ";
     }
+    INFOLOG<<"ThreadPool start";
     if (m_init_cb != nullptr)
     {
         m_init_cb();
@@ -54,6 +54,7 @@ void ThreadPool::stop()
     }
     for(auto it=mc_threads.begin();it!=mc_threads.end();++it)
     {
+        // 阻塞等待
         (*it)->join();
     }
 }
@@ -80,9 +81,7 @@ void ThreadPool::add_task(const Task &t)
         mc_tasks.push_back(t);
         m_can_take.notify();
     }
-    // TRACELOG<<"add new task ";
 }
-
 
 ThreadPool::Task ThreadPool::take()
 {
@@ -104,9 +103,6 @@ ThreadPool::Task ThreadPool::take()
             m_can_add.notify();
         }
     }
-    
-    // TRACELOG<<"tasks remain : "<<mc_tasks.size();
-    
     return t;
 }
 
