@@ -42,7 +42,7 @@ class Condition : aux::Noncopyable
 
     ~Condition()
     {
-        if (pthread_cond_destroy(&m_cond, NULL))
+        if (pthread_cond_destroy(&m_cond))
         {
             FATAlLOG << "Condition destroy error";
         }
@@ -60,14 +60,14 @@ class Condition : aux::Noncopyable
 
     void notify()
     {
-        if (pthread_cond_signal(&m_cond, NULL))
+        if (pthread_cond_signal(&m_cond))
         {
             FATAlLOG << "Condition notify error";
         }
     }
     void notify_all()
     {
-        if (pthread_cond_broadcast(&m_cond, NULL))
+        if (pthread_cond_broadcast(&m_cond))
         {
             FATAlLOG << "Condition notify_all error";
         }

@@ -41,10 +41,6 @@ class RingBuffer
     {
         return mc_buffer.size() - m_write_start;
     }
-    const char *read_ptr() const
-    {
-        return begin() + m_read_start;
-    }
 
     char *read_ptr()
     {

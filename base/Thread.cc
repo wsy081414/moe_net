@@ -37,7 +37,7 @@ struct ThreadData
                     <<" reason: "<<ex.what();
         }catch(...)
         {
-            INFOWARN<<"unknown exception caught in Thread: "<<m_name.c_str();
+            INFOLOG<<"unknown exception caught in Thread: "<<m_name.c_str();
         }
     }
 };

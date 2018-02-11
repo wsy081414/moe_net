@@ -55,7 +55,8 @@ void Socket::set_no_delay(bool on)
 void Socket::set_reuse_addr(bool on)
 {
     int opt=on?1:0;
-    ::setsockopt(m_fd,SOL_SOCKET,SO_REUSEADDR,&opt,static_cast<socklen_t>(sizeof(opt)));
+    int ret = ::setsockopt(m_fd,SOL_SOCKET,SO_REUSEADDR,&opt,static_cast<socklen_t>(sizeof(opt)));
+    TRACELOG<<"set_reuse_addr : "<<ret;
 }
 void Socket::set_reuse_port(bool on)
 {

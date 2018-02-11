@@ -1,4 +1,4 @@
-#include <moe_net/net/HttpContext.h>
+#include <moe_net/net/http/HttpContext.h>
 #include <moe_net/base/String.h>
 
 #include <moe_net/base/Logger.h>
@@ -76,7 +76,7 @@ bool HttpContext::parse_req(RingBuffer *buf, Timestamp time)
         {
         }
     }
-    TRACELOG<<"HttpContext::parse_req : "<<ok;
+    buf->read_skip_all();
     return ok;
 }
 
@@ -124,6 +124,5 @@ bool HttpContext::parse_line(const char *start, const char *end)
             }
         }
     }
-    TRACELOG<<"HttpContext::parse_line over : "<<ok;
     return ok;
 }

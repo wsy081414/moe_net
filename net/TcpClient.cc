@@ -68,7 +68,7 @@ void TcpClient::new_conn(int fd)
 
     TRACELOG<<"TcpClient : establis new connection "<<fd;
 
-    tcp_conn->set_write_cb(m_write_cb);
+    tcp_conn->set_write_complete_cb(m_write_cb);
     tcp_conn->set_conn_cb(m_conn_cb);
     tcp_conn->set_msg_cb(m_msg_cb);
     tcp_conn->set_close_cb(

@@ -47,7 +47,7 @@ void TcpServer::set_threads(int i)
 void TcpServer::start()
 {
     m_thread_pool->start(m_thread_cb);
-    assert(!m_acceptor->listening());
+    assert(!m_acceptor->is_listening());
 
     // 开始 listen
     mp_loop->add_task(
@@ -82,7 +82,7 @@ void TcpServer::new_conn(int fd,const SockAddr &peer_addr)
     // 只要这里的没了，那么其他地方的也就跟着要没了。
     mc_connections[index] = conn;
     
-    conn->m_write_complete_cb(m_write_cb);
+    conn->set_write_complete_cb(m_write_cb);
     conn->set_msg_cb(m_msg_cb);
     conn->set_conn_cb(m_conn_cb);
     conn->set_close_cb(

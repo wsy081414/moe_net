@@ -1,3 +1,9 @@
+/*
+HttpRequest 由 HttpConetext 类解析收到的数据后生成此类
+
+http 信息以 k-v 的形式存放在 map 中
+
+*/
 #ifndef MOE_HTTPREQUEST_H
 #define MOE_HTTPREQUEST_H
 

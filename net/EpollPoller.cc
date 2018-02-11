@@ -68,8 +68,9 @@ Timestamp EpollPoller::poll(int time_out, ChannelVector *wall_fill)
 
     int active_counts = ::epoll_wait(m_epoll_fd, &*mc_events.begin(),
                                      static_cast<int>(mc_events.size()),
-                                     time_out);
-
+                                     100000);
+    
+    Timestamp poll_return;
     if (active_counts > 0)
     {
         fill_active_vector(active_counts, wall_fill);
@@ -122,11 +123,25 @@ void EpollPoller::update(Channel *channel)
     {
         assert(mc_channels.find(fd) != mc_channels.end());
         update_epoll(EPOLL_CTL_MOD, channel);
+    }else if(status==s_del)
+    {
+        update_epoll(EPOLL_CTL_MOD, channel);
+        channel->status(s_old);       
+    }
+    
+    if(channel->is_no_event())
+    {
+        assert(mc_channels.find(fd) != mc_channels.end());
+        update_epoll(EPOLL_CTL_DEL, channel);
+        channel->status(s_del);
     }
 }
 
 void EpollPoller::remove(Channel *channel)
 {
+    int status = channel->status();
+    assert(status == s_old || status==s_del);
+
     assert(is_in_loop_thread());
     int fd = channel->fd();
 
@@ -136,9 +151,6 @@ void EpollPoller::remove(Channel *channel)
     // 删除的 channel 必须是没有任何监听事件的
     assert(mc_channels[fd]->is_no_event());
 
-    int status = channel->status();
-    assert(status == s_old);
-
     size_t n = mc_channels.erase(fd);
     assert(n == 1);
 
@@ -147,10 +159,12 @@ void EpollPoller::remove(Channel *channel)
         update_epoll(EPOLL_CTL_DEL, channel);
     }
     channel->status(s_new);
+
 }
 
 void EpollPoller::update_epoll(int cmd, Channel *channel)
 {
+
     struct epoll_event event;
     bzero(&event, sizeof(event));
     event.events = channel->events();
@@ -160,7 +174,7 @@ void EpollPoller::update_epoll(int cmd, Channel *channel)
 
     if (::epoll_ctl(m_epoll_fd, cmd, fd, &event) < 0)
     {
-        FATAlLOG << "epoll_ctl error";
+        FATAlLOG << "epoll_ctl error: "<<(cmd==EPOLL_CTL_DEL);
     }
 }
 

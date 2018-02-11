@@ -21,7 +21,6 @@ EventLoopThread::~EventLoopThread()
         mp_loop->quit();
         m_thread.join();
     }
-    INFOLOG<<"EventLoopThread : "<<name<<" destory";
 }
 
 EventLoop *EventLoopThread::start()

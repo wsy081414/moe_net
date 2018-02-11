@@ -37,8 +37,8 @@ TcpConnection 连接的状态 m_status :
 #include <moe_net/net/CallBack.h>
 #include <moe_net/base/String.h>
 #include <moe_net/net/SockAddr.h>
-#include <moe_net/base/RingBuffer.h>
-#include <moe_net/net/HttpContext.h>
+#include <moe_net/net/RingBuffer.h>
+#include <moe_net/net/http/HttpContext.h>
 #include <memory>
 
 
@@ -97,10 +97,11 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
   private:
     enum Status
     {
-        e_disconnected,
-        e_connected,
-        e_connecting,
-        e_disconnecting
+        e_connecting=0,
+        e_connected=1,
+        e_disconnecting=2,
+        e_disconnected=3
+
     };
 
     void handle_read(Timestamp receive_time);
@@ -145,6 +146,17 @@ class TcpConnection : aux::Noncopyable, public std::enable_shared_from_this<TcpC
 };
 
 typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
+}
+
+
+namespace aux 
+{
+using namespace moe::net;
+void default_connect_cb(const TcpConnectionPtr& conn);
+void default_msg_cb(const TcpConnectionPtr& conn,RingBuffer *buf,Timestamp);
+
+
+
 }
 }
 

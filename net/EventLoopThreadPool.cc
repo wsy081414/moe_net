@@ -1,4 +1,6 @@
 #include <moe_net/net/EventLoopThreadPool.h>
+#include <moe_net/base/Logger.h>
+
 
 using namespace moe;
 using namespace moe::net;
@@ -11,7 +13,7 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop *loop, const String &name)
 
 EventLoopThreadPool::~EventLoopThreadPool()
 {
-    INFOLOG << "EventLoopThreadPool : " << name << " destory";
+    INFOLOG << "EventLoopThreadPool : " << m_name << " destory";
 }
 
 void EventLoopThreadPool::start(const ThreadInitCallback &cb)

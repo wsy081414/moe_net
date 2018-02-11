@@ -1,10 +1,15 @@
+/*
+HttpContext 类,用于解析接受到的数据为 http形式,存放在 HttpRequest
+本类,只是简单的接受数据,然后解析,返回 HttpRequest 的实例
+
+*/
 #ifndef MOE_HTTPCONTEXT_H
 #define MOE_HTTPCONTEXT_H
 
 
 #include <moe_net/base/Timestamp.h>
-#include <moe_net/base/RingBuffer.h>
-#include <moe_net/net/HttpRequest.h>
+#include <moe_net/net/RingBuffer.h>
+#include <moe_net/net/http/HttpRequest.h>
 #include <moe_net/base/Logger.h>
 
 #include <utility>

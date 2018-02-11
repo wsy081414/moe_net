@@ -15,7 +15,7 @@
 
 #include <moe_net/net/SockAddr.h>
 #include <moe_net/net/TcpClient.h>
-#include <moe_net/base/RingBuffer.h>
+#include <moe_net/net/RingBuffer.h>
 #include <moe_net/net/TcpServer.h>
 
 

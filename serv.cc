@@ -15,10 +15,9 @@
 
 #include <moe_net/net/SockAddr.h>
 #include <moe_net/net/TcpClient.h>
-#include <moe_net/base/RingBuffer.h>
+#include <moe_net/net/RingBuffer.h>
 #include <moe_net/net/TcpServer.h>
-#include <moe_net/net/HttpServer.h>
-
+#include <moe_net/net/http/HttpServer.h>
 
 
 
@@ -45,28 +44,6 @@ int main()
     Thread t(func,"test thread");
     // t.start();
     Logger::level(Logger::TRACE);
-    // TRACELOG<<"haha";
-    // ThreadPool tp;
-    // tp.start(4);
-    // for(int i=0;i<10;i++)
-    // {
-    //     // tp.add_task(func);
-    // }
-
-
-
-    // EventLoopThread loop;
-    // // TRACELOG<<loop.is_in_loop_thread();
-    // EventLoop *loop_ptr=loop.start();
-    
-
-    // SockAddr serv_addr("127.0.0.1",7777);
-
-    // TcpClient client(loop_ptr,serv_addr,"client 127.0.0.1");
-
-    // // client.set_close_cb(func2);
-    
-    // client.connect();
 
     EventLoop loop_serv;
     SockAddr listen_addr("127.0.0.1",7777);

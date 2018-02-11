@@ -3,7 +3,7 @@
 
 #include <string>
 #include <map>
-#include <moe_net/base/RingBuffer.h>
+#include <moe_net/net/RingBuffer.h>
 
 namespace moe
 {

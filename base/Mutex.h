@@ -47,7 +47,7 @@ class Mutex : aux::Noncopyable
     ~Mutex()
     {
         assert(m_holder == 0);
-        if (pthread_mutex_destroy(&m_mutex, NULL))
+        if (pthread_mutex_destroy(&m_mutex))
         {
             FATAlLOG << "Mutex destroy error";
         }
@@ -55,7 +55,7 @@ class Mutex : aux::Noncopyable
 
     void lock()
     {
-        if (pthread_mutex_lock(&m_mutex, NULL))
+        if (pthread_mutex_lock(&m_mutex))
         {
             FATAlLOG << "Mutex lock error";
         }
@@ -64,7 +64,7 @@ class Mutex : aux::Noncopyable
     void unlock()
     {
         before_unlock();
-        if (pthread_mutex_unlock(&m_mutex, NULL))
+        if (pthread_mutex_unlock(&m_mutex))
         {
             FATAlLOG << "Mutex unlock error";
         }

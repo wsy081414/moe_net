@@ -5,7 +5,7 @@ aux_source_directory(. NET_SRC)
 
 
 add_library(net_lib ${NET_SRC})
-target_link_libraries(net_lib base_lib)
+target_link_libraries(net_lib base_lib http_lib)
 
 
 INCLUDE_DIRECTORIES(../../../ ../../ ./)

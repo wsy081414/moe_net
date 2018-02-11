@@ -1,3 +1,11 @@
+/*
+
+Channel 类,主要是讲 fd 与fd对应事件的函数绑定在一起.
+同时 Channel 与一个 EventLoop 绑定.
+
+
+当出现 POLLHUP 的时候,必须关闭,否则会一直出现该事件.(LT)模式下.
+*/
 #ifndef MOE_CHANNEL_H
 #define MOE_CHANNEL_H
 

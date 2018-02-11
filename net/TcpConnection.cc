@@ -15,7 +15,7 @@ using namespace moe::net;
 
 void default_connect_cb(const TcpConnectionPtr& conn)
 {
-    if(conn->status == e_connected)
+    if(conn->is_connected())
     {
         INFOLOG<<"connect in";
     }else{
@@ -74,7 +74,6 @@ void TcpConnection::send(const char *buf, size_t len)
 
 void TcpConnection::send_run_in_loop(const String &str)
 {
-    TRACELOG << "TcpConnection::send_run_in_loop:\n " << str.c_str();
 
     assert(mp_loop->is_in_loop_thread());
     size_t len = str.size();
@@ -126,7 +125,7 @@ void TcpConnection::send_run_in_loop(const String &str)
         if (hasnt_out + remain >= m_hight_water &&
             hasnt_out < m_hight_water && m_hight_water_cb)
         {
-            m_hight_water_cb();
+            mp_loop->add_task(std::bind(m_hight_water_cb,shared_from_this(),hasnt_out+remain));
         }
 
         mc_output.append(msg + nwrote, remain);
@@ -226,7 +225,7 @@ void TcpConnection::handle_read(Timestamp receive_time)
     int save_errno;
 
     int n = mc_input.read_from_fd(m_channel->fd(), &save_errno);
-
+    TRACELOG<<"TcpConnection::handle_read :size(): "<<n<<" data: \n"<<String(mc_input.read_ptr(),mc_input.read_size());
     if (n > 0)
     {
         m_msg_cb(shared_from_this(), &mc_input, receive_time);
@@ -284,9 +283,11 @@ void TcpConnection::handle_write()
 
 void TcpConnection::handle_close()
 {
+    TRACELOG << "TcpConnection::handle_close: "<<m_fd;
+
     assert(mp_loop->is_in_loop_thread());
 
-    assert(m_status == e_connecting || m_status == e_connected);
+    assert(m_status == e_disconnecting || m_status == e_connected);
     status(e_disconnected);
 
     m_channel->disable_all();
@@ -294,6 +295,7 @@ void TcpConnection::handle_close()
     // 这里 m_close_cb 是 TcpServer 中 map 删除 TcpConnection 的函数
     // 删除完以后，又调用  connect_destroy
     TcpConnectionPtr guard(shared_from_this());
+    m_conn_cb(guard);
     m_close_cb(guard);
 }
 
@@ -315,7 +317,6 @@ void TcpConnection::connect_establised()
 // 只是 不在监听读,从 epoll 移除
 void TcpConnection::connect_destroy()
 {
-    // TRACELOG<<"TcpConnection::connect_destroy()";
     assert(mp_loop->is_in_loop_thread());
     if (m_status == e_connected)
     {

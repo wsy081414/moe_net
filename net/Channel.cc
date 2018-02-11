@@ -61,6 +61,7 @@ EPOLLERR 是服务器这边出错才返回的，向已经断开的socket写或�
 */
 void Channel::handle_event(Timestamp receive_time)
 {
+    TRACELOG<<"Channel event: "<<revents_to_string();
     mb_is_handling = true;
   
     // POLLHUP 实在对端关闭套接字的时候返回的，如果有 POLLHUP 而且不可读 POLLIN
@@ -127,7 +128,6 @@ String Channel::revents_to_string()
 
 String Channel::to_string(int ev)
 {
-    int ev = m_revents;
     std::ostringstream oss;
     oss << m_fd << ": ";
     if (ev & POLLIN)

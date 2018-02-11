@@ -27,6 +27,7 @@ FATAL level 指出每个严重的错误事件将会导致应用程序的退出�
 
 #include <moe_net/base/LogStream.h>
 #include <moe_net/base/Timestamp.h>
+#include <functional>
 
 namespace moe
 {
@@ -44,7 +45,7 @@ class Logger
         ERROR = 4,
         FATAl = 5
     };
-    typedef function<void (String)> OutFunc;
+    typedef std::function<void (String)> OutFunc;
   private:
     LogStream m_log;
     Timestamp m_time;

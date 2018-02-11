@@ -1,5 +1,5 @@
-#include <moe_net/net/HttpServer.h>
-#include <moe_net/net/HttpResponse.h>
+#include <moe_net/net/http/HttpServer.h>
+#include <moe_net/net/http/HttpResponse.h>
 #include <moe_net/base/Logger.h>
 
 
@@ -55,6 +55,7 @@ void HttpServer::request_cb(const TcpConnectionPtr& conn, const HttpRequest& req
     const std::string connection= req.header("Connection");
     bool close = (connection == "close") || 
                             (req.version()==HttpRequest::e_http10 && connection != "Keep-Alive");
+    TRACELOG<<"connection need close: "<<close;
     HttpResponse res(close);
 
     RingBuffer buf;

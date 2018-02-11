@@ -177,7 +177,6 @@ bool EventLoop::is_in_loop_thread(bool need)
 // 添加计时器
 int64_t EventLoop::add_timer(const TimerCallBack& cb,int64_t when,bool repeat)
 {
- 
     return m_timer_queue.add_timer(cb,when,repeat);
 }   
 void EventLoop::cancel_timer(int64_t id)
@@ -195,6 +194,7 @@ void EventLoop::add_task(const Func & task)
     }else{
         add_in_queue(task);
     }
+    
 }
 
 
@@ -214,12 +214,14 @@ void EventLoop::add_in_queue(const Func &task)
 void EventLoop::handle_tasks()
 {
     m_handle_tasks=true;
+    
     std::vector<Func> tmp_vector;
     {
         MutexLock lock(m_mutex);
         tmp_vector.swap(mc_tasks);
     }
 
+    
     for(task:tmp_vector)
     {
         task();

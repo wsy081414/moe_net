@@ -59,7 +59,7 @@ class LogBuffer : aux::Noncopyable
     char *current() {return mp_cur;}
     void reset() { mp_cur = m_data; }
     void bzero() { ::bzero(m_data, sizeof(m_data)); }
-    String to_sting() { return String(&m_data[0], size()); }
+    String to_string() { return String(&m_data[0], size()); }
     // 只为添加数字而用的。
     void add(size_t len) {mp_cur +=len;}
 };

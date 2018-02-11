@@ -1,4 +1,4 @@
-#include <moe_net/base/RingBuffer.h>
+#include <moe_net/net/RingBuffer.h>
 
 #include <sys/uio.h>
 
